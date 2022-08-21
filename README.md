@@ -23,3 +23,16 @@ How to setup:
 7. Alternative to steps 4-6 - use `C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat` to set up variables every time you build a file, if you don't want to mess with global environment (_the cost - slower builds_).
 8. Fix up `msvc_build.cmd` and/or setup your folder structure so that it can find all needed files/programs
 9. You are ready for rapid C/C++ development in Notepad++!
+
+You can control compilation easily from the sourcefile itself by including comment in the top of your source file like this:
+```
+// CONSOLE DBG NOPT
+```
+`CONSOLE` - compile program as console application (default - `SUBSYSTEM:WINDOWS`)
+`DSEH` - disable C++ STD SEH handling (if you need to `__try() __except()` in functions with objects)
+`NOPT` - disable all optimisations
+`NW` - disable all warnings
+`SLIB` - compile as static library
+`ASM` - instead of compiling to `.exe` file, opem MASM code created by the compiler in Notepad++ (aka. your own Compiler Explorer)
+`DBG` - compile in debug mode and launch resulting executable with `sddbg` debugger
+`NLAUNCH` - just compile, don't lauch the executable
