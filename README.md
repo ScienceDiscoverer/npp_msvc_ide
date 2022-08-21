@@ -1,5 +1,4 @@
 # Notepad++ MSVC IDE
-Turn your Notepad++ into powerful Visual Studio replacement!
 
 Compile any `.cpp` file instantly with the press of a button:
 
