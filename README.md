@@ -1,2 +1,2 @@
-# npp_msvc_ide
+# Notepad++ MSVC IDE
 Turn your Notepad++ into powerful Visual Studio replacement!
