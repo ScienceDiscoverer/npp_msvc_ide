@@ -29,10 +29,17 @@ You can control compilation easily from the sourcefile itself by including comme
 // CONSOLE DBG NOPT
 ```
 `CONSOLE` - compile program as console application (default - `SUBSYSTEM:WINDOWS`)
+
 `DSEH` - disable C++ STD SEH handling (if you need to `__try() __except()` in functions with objects)
+
 `NOPT` - disable all optimisations
+
 `NW` - disable all warnings
+
 `SLIB` - compile as static library
+
 `ASM` - instead of compiling to `.exe` file, opem MASM code created by the compiler in Notepad++ (aka. your own Compiler Explorer)
+
 `DBG` - compile in debug mode and launch resulting executable with `sddbg` debugger
+
 `NLAUNCH` - just compile, don't lauch the executable
