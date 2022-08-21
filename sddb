@@ -1,0 +1,431 @@
+#pragma once
+
+#include <windows.h>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <conio.h>
+
+#ifdef DEBUG
+#pragma comment( lib, "sddbd" )
+#else
+#pragma comment( lib, "sddb" )
+#endif
+
+#define pause _getch();
+
+//#define BPOFF
+#ifndef BPOFF
+#define STR(x) #x
+#define TOSTR(x) STR(x)
+#define bp std::wcout << "BP-" << TOSTR(__LINE__) << std::endl; fkcursor(); _getch(); okcursor();
+#define dp(x) std::wcout << std::setw(32) << #x << "|" << (x) << "|" << std::endl;
+#define dph(x) std::wcout << std::setw(32) << std::hex << std::uppercase << #x << "|" << (x) << "|" << std::dec << nouppercase << std::endl;
+#else
+#define bp
+#define dp(x)
+#define dph(x)
+#endif
+
+//using namespace std;
+
+typedef unsigned long long ui64;
+typedef signed long long i64;
+typedef unsigned int ui32;
+typedef signed int i32;
+typedef unsigned short ui16;
+typedef signed short i16;
+typedef unsigned char ui8;
+typedef signed char i8;
+
+inline DWORD getDefCurSize()
+{
+	HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO cci;
+	GetConsoleCursorInfo(oh, &cci);
+	return cci.dwSize;
+}
+
+extern DWORD cur_def_sz;
+
+inline void fkcursor()
+{
+	static CONSOLE_CURSOR_INFO cninj = { cur_def_sz , FALSE };
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorInfo(oh, &cninj);
+}
+inline void okcursor()
+{
+	static CONSOLE_CURSOR_INFO csamu = { cur_def_sz , TRUE };
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorInfo(oh, &csamu);
+}
+
+#define EXCEPTION_CPP_LOWERCASE 0xE06D7363
+#define EXCEPTION_CPP_UPPERCASE 0xE04D5343
+// CUSTOM EXCEPTIONS
+#define EXCEPTION_TXTI_BUFF_OVERRUN 0xE0000001
+#define EXCEPTION_TXTO_BUFF_OVERRUN 0xE0000002
+#define EXCEPTION_T2I_NON_NUMBER    0xE0000003
+#define EXCEPTION_H2I_NON_NUMBER    0xE0000004
+#define EXCEPTION_T2I_OVERFLOW      0xE0000005
+#define EXCEPTION_H2I_OVERFLOW      0xE0000006
+
+#define EXCEPT_TXT_UTF8  0
+#define EXCEPT_TXT_UTF16 1
+
+#define TRY __try {
+#define EXCEPT } __except(efilter(GetExceptionInformation())) {}
+//GetExceptionCode() --> may be usefull for quick flitering
+
+// #define FOREGROUND_BLUE      0x0001 // text color contains blue.
+// #define FOREGROUND_GREEN     0x0002 // text color contains green.
+// #define FOREGROUND_RED       0x0004 // text color contains red.
+// #define FOREGROUND_INTENSITY 0x0008 // text color is intensified.
+// #define BACKGROUND_BLUE      0x0010 // background color contains blue.
+// #define BACKGROUND_GREEN     0x0020 // background color contains green.
+// #define BACKGROUND_RED       0x0040 // background color contains red.
+// #define BACKGROUND_INTENSITY 0x0080 // background color is intensified.
+
+#define COL_RED FOREGROUND_INTENSITY | FOREGROUND_RED
+#define COL_GRE FOREGROUND_INTENSITY | FOREGROUND_GREEN
+#define COL_BLU FOREGROUND_INTENSITY | FOREGROUND_BLUE
+
+#define COL_YEL FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN
+#define COL_VIO FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE
+#define COL_CAY FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_GREEN
+
+inline WORD getDefColors()
+{
+	HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(oh, &csbi);
+	return csbi.wAttributes;
+}
+
+extern WORD def_color;
+
+inline std::ios_base& def(std::ios_base& iob)
+{
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(oh, def_color);
+	return iob;
+}
+
+inline std::ios_base& red(std::ios_base& iob)
+{
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(oh, COL_RED);
+	return iob;
+}
+
+inline std::ios_base& gre(std::ios_base& iob)
+{
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(oh, COL_GRE);
+	return iob;
+}
+
+inline std::ios_base& blu(std::ios_base& iob)
+{
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(oh, COL_BLU);
+	return iob;
+}
+
+inline std::ios_base& yel(std::ios_base& iob)
+{
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(oh, COL_YEL);
+	return iob;
+}
+
+inline std::ios_base& vio(std::ios_base& iob)
+{
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(oh, COL_VIO);
+	return iob;
+}
+
+inline std::ios_base& cay(std::ios_base& iob)
+{
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(oh, COL_CAY);
+	return iob;
+}
+
+void pexcept(_EXCEPTION_RECORD *er, HANDLE proc);
+int efilter(_EXCEPTION_POINTERS *ep);
+
+inline std::wstring err2s(DWORD res)
+{
+	static wchar_t buff[300];
+	
+	FormatMessage(
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		res,
+		0,
+		buff,
+		300,
+		NULL);
+		
+  std::wstringstream wss;
+  wss << L"[E:" << res << L"] " << std::wstring(buff);
+  return wss.str();
+}
+
+inline void perr()
+{
+	std::wcout << " " << err2s(GetLastError()) << std::endl;
+}
+
+typedef struct
+{
+	ui64 tt;
+	ui64 t[0x10];
+	LARGE_INTEGER st[0x10];
+	LARGE_INTEGER et[0x10];
+} SW_FUNC;
+
+extern LARGE_INTEGER sw_stime[0x20];
+extern LARGE_INTEGER sw_etime[0x20];
+extern SW_FUNC sw_fs[0x10];
+
+extern ui64 sw_ns_per_tick;
+extern LARGE_INTEGER sw_freq;
+
+#define FSW(x) QueryPerformanceCounter(&sw_fs[x].st[0x0]);
+#define FSWS0(x) QueryPerformanceCounter(&sw_fs[x].et[0x0]); QueryPerformanceCounter(&sw_fs[x].st[0x1]);
+#define FSWS1(x) QueryPerformanceCounter(&sw_fs[x].et[0x1]); QueryPerformanceCounter(&sw_fs[x].st[0x2]);
+#define FSWS2(x) QueryPerformanceCounter(&sw_fs[x].et[0x2]); QueryPerformanceCounter(&sw_fs[x].st[0x3]);
+#define FSWS3(x) QueryPerformanceCounter(&sw_fs[x].et[0x3]); QueryPerformanceCounter(&sw_fs[x].st[0x4]);
+#define FSWS4(x) QueryPerformanceCounter(&sw_fs[x].et[0x4]); QueryPerformanceCounter(&sw_fs[x].st[0x5]);
+#define FSWS5(x) QueryPerformanceCounter(&sw_fs[x].et[0x5]); QueryPerformanceCounter(&sw_fs[x].st[0x6]);
+#define FSWS6(x) QueryPerformanceCounter(&sw_fs[x].et[0x6]); QueryPerformanceCounter(&sw_fs[x].st[0x7]);
+#define FSWS7(x) QueryPerformanceCounter(&sw_fs[x].et[0x7]); QueryPerformanceCounter(&sw_fs[x].st[0x8]);
+#define FSWS8(x) QueryPerformanceCounter(&sw_fs[x].et[0x8]); QueryPerformanceCounter(&sw_fs[x].st[0x9]);
+#define FSWS9(x) QueryPerformanceCounter(&sw_fs[x].et[0x9]); QueryPerformanceCounter(&sw_fs[x].st[0xA]);
+#define FSWSA(x) QueryPerformanceCounter(&sw_fs[x].et[0xA]); QueryPerformanceCounter(&sw_fs[x].st[0xB]);
+#define FSWSB(x) QueryPerformanceCounter(&sw_fs[x].et[0xB]); QueryPerformanceCounter(&sw_fs[x].st[0xC]);
+#define FSWSC(x) QueryPerformanceCounter(&sw_fs[x].et[0xC]); QueryPerformanceCounter(&sw_fs[x].st[0xD]);
+#define FSWSD(x) QueryPerformanceCounter(&sw_fs[x].et[0xD]); QueryPerformanceCounter(&sw_fs[x].st[0xE]);
+#define FSWSE(x) QueryPerformanceCounter(&sw_fs[x].et[0xE]); QueryPerformanceCounter(&sw_fs[x].st[0xF]);
+#define FSWSF(x) QueryPerformanceCounter(&sw_fs[x].et[0xF]);
+
+#define FSWACC(x) for(int sw_i = 0; sw_i < 0x10; ++sw_i) { if(!sw_fs[x].et[sw_i].QuadPart) break; sw_fs[x].t[sw_i] += sw_fs[x].et[sw_i].QuadPart - sw_fs[x].st[sw_i].QuadPart; }
+
+#define FSWT(F, T) swT2S(sw_fs[F].t[T], fswTtot(F))
+#define FSWTOT(F) swT2S(fswTtot(F), fswTtot(F))
+
+inline ui64 fswTtot(ui64 f)
+{
+	if(sw_fs[f].tt == 0)
+	{
+		for(int i = 0; i < 0x10; ++i)
+		{
+			sw_fs[f].tt += sw_fs[f].t[i];
+		}
+	}
+	
+	return sw_fs[f].tt;
+}
+
+#ifndef STOPWATCHES
+#define SW0SET QueryPerformanceCounter(&sw_stime[0x0]);
+#define SW1SET QueryPerformanceCounter(&sw_stime[0x1]);
+#define SW2SET QueryPerformanceCounter(&sw_stime[0x2]);
+#define SW3SET QueryPerformanceCounter(&sw_stime[0x3]);
+#define SW4SET QueryPerformanceCounter(&sw_stime[0x4]);
+#define SW5SET QueryPerformanceCounter(&sw_stime[0x5]);
+#define SW6SET QueryPerformanceCounter(&sw_stime[0x6]);
+#define SW7SET QueryPerformanceCounter(&sw_stime[0x7]);
+#define SW8SET QueryPerformanceCounter(&sw_stime[0x8]);
+#define SW9SET QueryPerformanceCounter(&sw_stime[0x9]);
+#define SWASET QueryPerformanceCounter(&sw_stime[0xA]);
+#define SWBSET QueryPerformanceCounter(&sw_stime[0xB]);
+#define SWCSET QueryPerformanceCounter(&sw_stime[0xC]);
+#define SWDSET QueryPerformanceCounter(&sw_stime[0xD]);
+#define SWESET QueryPerformanceCounter(&sw_stime[0xE]);
+#define SWFSET QueryPerformanceCounter(&sw_stime[0xF]);
+
+#define SW10SET QueryPerformanceCounter(&sw_stime[0x10]);
+#define SW11SET QueryPerformanceCounter(&sw_stime[0x11]);
+#define SW12SET QueryPerformanceCounter(&sw_stime[0x12]);
+#define SW13SET QueryPerformanceCounter(&sw_stime[0x13]);
+#define SW14SET QueryPerformanceCounter(&sw_stime[0x14]);
+#define SW15SET QueryPerformanceCounter(&sw_stime[0x15]);
+#define SW16SET QueryPerformanceCounter(&sw_stime[0x16]);
+#define SW17SET QueryPerformanceCounter(&sw_stime[0x17]);
+#define SW18SET QueryPerformanceCounter(&sw_stime[0x18]);
+#define SW19SET QueryPerformanceCounter(&sw_stime[0x19]);
+#define SW1ASET QueryPerformanceCounter(&sw_stime[0x1A]);
+#define SW1BSET QueryPerformanceCounter(&sw_stime[0x1B]);
+#define SW1CSET QueryPerformanceCounter(&sw_stime[0x1C]);
+#define SW1DSET QueryPerformanceCounter(&sw_stime[0x1D]);
+#define SW1ESET QueryPerformanceCounter(&sw_stime[0x1E]);
+#define SW1FSET QueryPerformanceCounter(&sw_stime[0x1F]);
+
+#define SW0STOP QueryPerformanceCounter(&sw_etime[0x0]);
+#define SW1STOP QueryPerformanceCounter(&sw_etime[0x1]);
+#define SW2STOP QueryPerformanceCounter(&sw_etime[0x2]);
+#define SW3STOP QueryPerformanceCounter(&sw_etime[0x3]);
+#define SW4STOP QueryPerformanceCounter(&sw_etime[0x4]);
+#define SW5STOP QueryPerformanceCounter(&sw_etime[0x5]);
+#define SW6STOP QueryPerformanceCounter(&sw_etime[0x6]);
+#define SW7STOP QueryPerformanceCounter(&sw_etime[0x7]);
+#define SW8STOP QueryPerformanceCounter(&sw_etime[0x8]);
+#define SW9STOP QueryPerformanceCounter(&sw_etime[0x9]);
+#define SWASTOP QueryPerformanceCounter(&sw_etime[0xA]);
+#define SWBSTOP QueryPerformanceCounter(&sw_etime[0xB]);
+#define SWCSTOP QueryPerformanceCounter(&sw_etime[0xC]);
+#define SWDSTOP QueryPerformanceCounter(&sw_etime[0xD]);
+#define SWESTOP QueryPerformanceCounter(&sw_etime[0xE]);
+#define SWFSTOP QueryPerformanceCounter(&sw_etime[0xF]);
+
+#define SW10STOP QueryPerformanceCounter(&sw_etime[0x10]);
+#define SW11STOP QueryPerformanceCounter(&sw_etime[0x11]);
+#define SW12STOP QueryPerformanceCounter(&sw_etime[0x12]);
+#define SW13STOP QueryPerformanceCounter(&sw_etime[0x13]);
+#define SW14STOP QueryPerformanceCounter(&sw_etime[0x14]);
+#define SW15STOP QueryPerformanceCounter(&sw_etime[0x15]);
+#define SW16STOP QueryPerformanceCounter(&sw_etime[0x16]);
+#define SW17STOP QueryPerformanceCounter(&sw_etime[0x17]);
+#define SW18STOP QueryPerformanceCounter(&sw_etime[0x18]);
+#define SW19STOP QueryPerformanceCounter(&sw_etime[0x19]);
+#define SW1ASTOP QueryPerformanceCounter(&sw_etime[0x1A]);
+#define SW1BSTOP QueryPerformanceCounter(&sw_etime[0x1B]);
+#define SW1CSTOP QueryPerformanceCounter(&sw_etime[0x1C]);
+#define SW1DSTOP QueryPerformanceCounter(&sw_etime[0x1D]);
+#define SW1ESTOP QueryPerformanceCounter(&sw_etime[0x1E]);
+#define SW1FSTOP QueryPerformanceCounter(&sw_etime[0x1F]);
+
+#define SW0PRINT swPrint(0x0);
+#define SW1PRINT swPrint(0x1);
+#define SW2PRINT swPrint(0x2);
+#define SW3PRINT swPrint(0x3);
+#define SW4PRINT swPrint(0x4);
+#define SW5PRINT swPrint(0x5);
+#define SW6PRINT swPrint(0x6);
+#define SW7PRINT swPrint(0x7);
+#define SW8PRINT swPrint(0x8);
+#define SW9PRINT swPrint(0x9);
+#define SWAPRINT swPrint(0xA);
+#define SWBPRINT swPrint(0xB);
+#define SWCPRINT swPrint(0xC);
+#define SWDPRINT swPrint(0xD);
+#define SWEPRINT swPrint(0xE);
+#define SWFPRINT swPrint(0xF);
+
+#define SW10PRINT swPrint(0x10);
+#define SW11PRINT swPrint(0x11);
+#define SW12PRINT swPrint(0x12);
+#define SW13PRINT swPrint(0x13);
+#define SW14PRINT swPrint(0x14);
+#define SW15PRINT swPrint(0x15);
+#define SW16PRINT swPrint(0x16);
+#define SW17PRINT swPrint(0x17);
+#define SW18PRINT swPrint(0x18);
+#define SW19PRINT swPrint(0x19);
+#define SW1APRINT swPrint(0x1A);
+#define SW1BPRINT swPrint(0x1B);
+#define SW1CPRINT swPrint(0x1C);
+#define SW1DPRINT swPrint(0x1D);
+#define SW1EPRINT swPrint(0x1E);
+#define SW1FPRINT swPrint(0x1F);
+
+#define SW0P swPrintRaw(0x0);
+#define SW1P swPrintRaw(0x1);
+#define SW2P swPrintRaw(0x2);
+#define SW3P swPrintRaw(0x3);
+#define SW4P swPrintRaw(0x4);
+#define SW5P swPrintRaw(0x5);
+#define SW6P swPrintRaw(0x6);
+#define SW7P swPrintRaw(0x7);
+#define SW8P swPrintRaw(0x8);
+#define SW9P swPrintRaw(0x9);
+#define SWAP swPrintRaw(0xA);
+#define SWBP swPrintRaw(0xB);
+#define SWCP swPrintRaw(0xC);
+#define SWDP swPrintRaw(0xD);
+#define SWEP swPrintRaw(0xE);
+#define SWFP swPrintRaw(0xF);
+
+#define SW10P swPrintRaw(0x10);
+#define SW11P swPrintRaw(0x11);
+#define SW12P swPrintRaw(0x12);
+#define SW13P swPrintRaw(0x13);
+#define SW14P swPrintRaw(0x14);
+#define SW15P swPrintRaw(0x15);
+#define SW16P swPrintRaw(0x16);
+#define SW17P swPrintRaw(0x17);
+#define SW18P swPrintRaw(0x18);
+#define SW19P swPrintRaw(0x19);
+#define SW1AP swPrintRaw(0x1A);
+#define SW1BP swPrintRaw(0x1B);
+#define SW1CP swPrintRaw(0x1C);
+#define SW1DP swPrintRaw(0x1D);
+#define SW1EP swPrintRaw(0x1E);
+#define SW1FP swPrintRaw(0x1F);
+#endif
+
+inline ui64 swMs(ui64 i)
+{
+	return (sw_etime[i].QuadPart - sw_stime[i].QuadPart)/(1000000/sw_ns_per_tick);
+}
+
+inline void swInit()
+{
+	if(sw_ns_per_tick)
+	{
+		return;
+	}
+
+	// Freqency may be in 100/10/1 ns, depending on device
+	// Get exect ns resolution by dividing 1 000 000 000 / freq
+	QueryPerformanceFrequency(&sw_freq);
+	sw_ns_per_tick = 1000000000/(ui64)sw_freq.QuadPart;
+
+	// Note: int64 can store up to 58 494 years, 88 days, 5 h, 36 m, 10 s, 955 ms, 161 us 600 ns
+	// at 10 000 000 ticks per second freqency (100 ns)
+}
+
+std::string swStr(ui64 i);
+std::string swT2S(ui64 timing, ui64 ttot);
+void swDiff(ui64 i_left, ui64 i_right);
+
+inline void swPrint(ui64 i)
+{
+	std::cout << "SW" << i << ": " << swStr(i) << std::endl;
+}
+
+inline void swPrintRaw(ui64 i)
+{
+	std::cout.width(16);
+	std::cout << std::left << swStr(i);
+}
+
+inline void prect(RECT r)
+{
+	std::cout << std::endl << std::dec << "   T:" << r.top <<
+		std::endl << "   L:" << r.left << std::endl <<
+		"   _________________\n"
+		"   |               |\n"
+		"   |               |\n"
+		"   |               |\n"
+		"   |_______________|R:" << r.right << std::endl <<
+		"                    B:" << r.bottom << std::endl << std::endl;
+}
+
+inline void prect(SMALL_RECT r)
+{
+	std::cout << std::endl << std::dec << "   T:" << r.Top <<
+		std::endl << "   L:" << r.Left << std::endl <<
+		"   _________________\n"
+		"   |               |\n"
+		"   |               |\n"
+		"   |               |\n"
+		"   |_______________|R:" << r.Right << std::endl <<
+		"                    B:" << r.Bottom << std::endl << std::endl;
+}
