@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<NotepadPlus>
+    <InternalCommands>
+        <Shortcut id="41010" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="42021" Ctrl="yes" Alt="no" Shift="yes" Key="79" />
+    </InternalCommands>
+    <Macros>
+        <Macro name="Trim Trailing Space and Save" Ctrl="no" Alt="yes" Shift="yes" Key="83">
+            <Action type="2" message="0" wParam="42024" lParam="0" sParam="" />
+            <Action type="2" message="0" wParam="41006" lParam="0" sParam="" />
+        </Macro>
+        <Macro name="RMBREAKPOINT" Ctrl="yes" Alt="no" Shift="no" Key="186">
+            <Action type="0" message="2338" wParam="0" lParam="0" sParam="" />
+            <Action type="2" message="0" wParam="43005" lParam="0" sParam="" />
+        </Macro>
+        <Macro name="BREAKPOINT" Ctrl="yes" Alt="no" Shift="no" Key="222">
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000D;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000A;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="b" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="p" />
+            <Action type="2" message="0" wParam="43005" lParam="0" sParam="" />
+        </Macro>
+        <Macro name="DBPRINT" Ctrl="yes" Alt="no" Shift="no" Key="80">
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000D;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000A;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="d" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="p" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="(" />
+            <Action type="0" message="2179" wParam="0" lParam="0" sParam="" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam=")" />
+            <Action type="2" message="0" wParam="43005" lParam="0" sParam="" />
+        </Macro>
+        <Macro name="DBPRINTHEX" Ctrl="yes" Alt="no" Shift="yes" Key="80">
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000D;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000A;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="d" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="p" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="h" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="(" />
+            <Action type="0" message="2179" wParam="0" lParam="0" sParam="" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam=")" />
+            <Action type="2" message="0" wParam="43005" lParam="0" sParam="" />
+        </Macro>
+        <Macro name="TRYEXCEPT" Ctrl="yes" Alt="no" Shift="no" Key="69">
+            <Action type="0" message="2177" wParam="0" lParam="0" sParam="" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="T" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="R" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="Y" />
+            <Action type="2" message="0" wParam="43005" lParam="0" sParam="" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000D;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000A;" />
+            <Action type="0" message="2179" wParam="0" lParam="0" sParam="" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000D;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&#x000A;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="E" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="X" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="C" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="E" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="P" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="T" />
+            <Action type="2" message="0" wParam="43005" lParam="0" sParam="" />
+        </Macro>
+        <Macro name="CLONEFILE" Ctrl="yes" Alt="no" Shift="yes" Key="68">
+            <Action type="0" message="2013" wParam="0" lParam="0" sParam="" />
+            <Action type="0" message="2178" wParam="0" lParam="0" sParam="" />
+            <Action type="0" message="2304" wParam="0" lParam="0" sParam="" />
+            <Action type="0" message="2422" wParam="0" lParam="0" sParam="" />
+            <Action type="0" message="2325" wParam="0" lParam="0" sParam="" />
+            <Action type="2" message="0" wParam="41001" lParam="0" sParam="" />
+            <Action type="0" message="2179" wParam="0" lParam="0" sParam="" />
+            <Action type="0" message="2316" wParam="0" lParam="0" sParam="" />
+        </Macro>
+    </Macros>
+    <UserDefinedCommands>
+        <Command name="Build C++ file" Ctrl="yes" Alt="yes" Shift="yes" Key="115">C:\ScienceDiscoverer\PROGRAMZ\msvc_build.cmd $(NAME_PART) $(CURRENT_DIRECTORY)</Command>
+        <Command name="Get PHP help" Ctrl="no" Alt="yes" Shift="no" Key="112">https://www.php.net/$(CURRENT_WORD)</Command>
+        <Command name="Wikipedia Search" Ctrl="no" Alt="yes" Shift="no" Key="114">https://en.wikipedia.org/wiki/Special:Search?search=$(CURRENT_WORD)</Command>
+        <Command name="Open selected file path in new instance" Ctrl="no" Alt="yes" Shift="no" Key="117">$(NPP_FULL_FILE_PATH) $(CURRENT_WORD) -nosession -multiInst</Command>
+    </UserDefinedCommands>
+    <PluginCommands>
+        <PluginCommand moduleName="ColumnTools.dll" internalID="2" Ctrl="yes" Alt="no" Shift="yes" Key="67" />
+    </PluginCommands>
+    <ScintillaKeys />
+</NotepadPlus>
