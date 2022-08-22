@@ -42,3 +42,5 @@ You can control compilation easily from the sourcefile itself by including comme
 `DBG` - compile in debug mode and launch resulting executable with `sddbg` debugger
 
 `NLAUNCH` - just compile, don't lauch the executable
+
+[What is `p|TB|P;`](https://github.com/ScienceDiscoverer/sd_std_libs)?
