@@ -1,4 +1,15 @@
 @echo off
+
+
+REM YOUR SET PATH GOES HERE
+
+REM YOUR SET INCLUDE GOES HERE
+
+REM YOUR SET LIB GOES HERE
+
+REM YOUR SET LIBPATH GOES HERE
+
+
 set "name=%1"
 set "ico_name=%name%"
 set "subsys=WINDOWS"
@@ -12,10 +23,12 @@ set "debug=/MD"
 set "debug_link="
 set "debug_def="
 set "no_launch="
+set "build_inc="
+set "start_up=/ENTRY:wmainCRTStartup"
 set "res_file="
-set "inc_dir=/I %2\..\MicroTests\"
-set "lib_dir=/LIBPATH:%2\..\MicroTests\"
-cd "%2"
+set "inc_dir=/I D:\P\MT\"
+set "lib_dir=/LIBPATH:D:\P\MT\"
+cd /d "%2"
 
 if not exist ico goto :noico
 if not exist ico\%ico_name%.ico set ico_name=main
@@ -44,14 +57,17 @@ for /f "tokens=1,* delims= " %%a in ("%fline%") do (
 	if "%%a"=="ASM" set "asm=/FAcsu"
 	if "%%a"=="DBG" set "debug=/MDd /Z7" & set "debug_link=/DEBUG" & set "debug_def=/D DEBUG"
 	if "%%a"=="NLAUNCH" set "no_launch=no"
-	
+	if "%%a"=="BINC" set "build_inc=true"
+	if "%%a"=="EPMAIN" set "start_up=/ENTRY:mainCRTStartup"
 	
 	set "fline=%%b"
 	goto :parse_loop
 )
 
+if "%build_inc%"=="true" binc %name% -inc
+
 :recompile
-cl %warns% /wd4530 /wd4710 /wd4711 /wd5045 /external:anglebrackets /external:W0 /diagnostics:caret /I %2 %optim% %debug_def% /D _%subsys% /D _UNICODE /D UNICODE /D _CRT_SECURE_NO_WARNINGS /Gm- %seh% %debug% /GS- /J /Zc:wchar_t /Zc:forScope /Zc:inline /permissive- /nologo %slib% %asm% %inc_dir% %name%.cpp %res_file% /link /SUBSYSTEM:%subsys% %linkopt% %debug_link% %lib_dir% /DYNAMICBASE:NO /MACHINE:X64 /ENTRY:wmainCRTStartup | vcstyle
+cl %warns% /wd4530 /wd4710 /wd4711 /wd5045 /external:anglebrackets /external:W0 /diagnostics:caret /I %2 %optim% %debug_def% /D _%subsys% /D _UNICODE /D UNICODE /D _CRT_SECURE_NO_WARNINGS /Gm- %seh% %debug% /GS- /J /Zc:wchar_t /Zc:forScope /Zc:inline /permissive- /nologo %slib% %asm% %inc_dir% %name%.cpp %res_file% /link /SUBSYSTEM:%subsys% %linkopt% %debug_link% %lib_dir% /DYNAMICBASE:NO /MACHINE:X64 %start_up% | vcstyle
 
 ::#pragma warning has priority over switches
 ::C4514 The optimizer removed an inline function that is not called. (DISABLE CANDIDATE)
@@ -60,7 +76,10 @@ cl %warns% /wd4530 /wd4710 /wd4711 /wd5045 /external:anglebrackets /external:W0 
 ::C4711 function selected for automatic inline expansion (code gen.)
 ::C5045 Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified (code gen.)
 
-if %ERRORLEVEL% EQU 1 pause > nul & exit
+if %ERRORLEVEL% EQU 1 (
+if "%build_inc%"=="true" binc %name% -dec
+pause > nul & exit )
+
 if %ERRORLEVEL% EQU 2 pause > nul
 
 if "%slib%"=="/c" ( if "%debug_link%"=="/DEBUG" (
@@ -76,5 +95,8 @@ if "%debug_link%"=="/DEBUG" start sddbg %name%.exe & goto :cleanup
 
 if "%no_launch%"=="" start "%name%" %name%.exe
 :cleanup
-del ico\res.rc ico\res.res %name%.obj
+del %name%.obj
+del ico\res.rc ico\res.res
+taskkill /f /im cmd.exe /fi "windowtitle eq Select sd_msvc_build" > nul
+taskkill /f /im cmd.exe /fi "windowtitle eq Administrator: sd_msvc_build" > nul
 taskkill /f /im cmd.exe /fi "windowtitle eq sd_msvc_build"
