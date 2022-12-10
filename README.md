@@ -17,7 +17,7 @@ How to setup:
 
 <img src="readme/custom_tb.png">
 
-2. Use `shortcuts.xml` in this repo as an example, but don't overwrite your own! Add this `Command` in your own `shortcuts.xml` file located in your Notepad++ profile `C:\Users\<USERNAME>\AppData\Roaming\Notepad++`:
+2. Use `shortcuts.xml` in this repo as an example, but don't overwrite your own! Add this `Command` in your own `shortcuts.xml` file located in your Notepad++ profile `C:\Users\<USERNAME>\AppData\Roaming\Notepad++`. You can also add usefull macroses to quickly add simple breakpoints, debug prints etc:
 ```
 <UserDefinedCommands>
   <Command name="Build C++ file" Ctrl="yes" Alt="yes" Shift="yes" Key="115">D:\<PATH_TO_FOLDER_WITH_CMD>\msvc_build.cmd $(NAME_PART) $(CURRENT_DIRECTORY)</Command>
