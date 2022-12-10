@@ -42,12 +42,12 @@ echo set "LIBPATH=%LIBPATH%" | clip
 set "inc_dir=/I D:\P\MT\"
 set "lib_dir=/LIBPATH:D:\P\MT\"
 ```
-9. Set up your folder structure to make it the most convinient to use this tool. I can give you and example of my own structure. `P` contains all the programs I ever created in one place. `MT` (*Micro Tests*) folder contains loads of tiny programs/utilities/libriaries I created that could be used by any "big" program in `P`. `msvc_build.cmd` file must be located in the `P` folder for all this system to work.
+9. Set up your folder structure to make it the most convenient to use this tool. I can give you and example of my own structure. `P` contains all the programs I ever created in one place. `MT` (*Micro Tests*) folder contains loads of tiny programs/utilities/libraries  I created that could be used by any "big" program in `P`. `msvc_build.cmd` file must be located in the `P` folder for all this system to work.
 
 <img src="readme/folderz.png">
 
-10. There is usefull feature with the icons. It's super easy, barely an inconvinience to add icon to your program, fast. All you have to do, is to create `ico` folder in your program's root folder and put icon into it that will **exactly match the program's .cpp file name** (i.e. foo.cpp > foo.ico). The cmd script will take care of all the annoying parts of actually compiling resource files, etc. Oh, and in your `MT` (or however you would like to call it) folder, you can put `main.ico` in the `ico` folder. This will get used by default for all the programs in the `MT` folder without any dedicated `program_name.ico` file.
-11. There is 3 custom made little utilities in the `msvc_build.cmd`. `nppsave`, `vcstyle` and `binc`. What `nppsave` does, it, basically, just sends Windows message to the Notepad++ that forces it to save current file. This frees you from having to constantly remember to SAVE THE FILE after you quickly corrected some error, which greately aids workflow. All you have to do is press the `Build CPP file` button. When first setting this up, just comment out `nppsave` with `REM` or `::`. Put the `nppsave.cpp` file into your `MT`-analogue folder and open it in NP++. You can then compile it from just by pressing `Build CPP file` button. If you want, you can add `MT` folder into your `Path` variable, or just paste full path to `nppsave.exe` (do the same with `vcstyle` and `binc`).
+10. There is useful feature with the icons. It's super easy, barely an inconvenience to add icon to your program, fast. All you have to do, is to create `ico` folder in your program's root folder and put icon into it that will **exactly match the program's .cpp file name** (i.e. foo.cpp > foo.ico). The CMD script will take care of all the annoying parts of actually compiling resource files, etc. Oh, and in your `MT` (or however you would like to call it) folder, you can put `main.ico` in the `ico` folder. This will get used by default for all the programs in the `MT` folder without any dedicated `program_name.ico` file.
+11. There is 3 custom made little utilities in the `msvc_build.cmd`. `nppsave`, `vcstyle` and `binc`. What `nppsave` does, it, basically, just sends Windows message to the Notepad++ that forces it to save current file. This frees you from having to constantly remember to SAVE THE FILE after you quickly corrected some error, which greatly aids workflow. All you have to do is press the `Build CPP file` button. When first setting this up, just comment out `nppsave` with `REM` or `::`. Put the `nppsave.cpp` file into your `MT`-analogue folder and open it in NP++. You can then compile it just by pressing `Build CPP file` button. If you want, you can add `MT` folder into your `Path` variable, or just paste full path to `nppsave.exe` (do the same with `vcstyle` and `binc`).
 12. `vcstyle` utility styles ugly and unreadable default output of VS compiler akin to MinGW. Again, remove it at the first setup and compile with the Notepad++ if you don't want to use my [releases](https://github.com/ScienceDiscoverer/npp_msvc_ide/releases)
 13. `binc` utility lets you automatically increment build number on your program. Note: this only increments global variables inside the program, not VERSIONINFO resource baked into `.exe` file. To use it, use `// BINC` command in the first line of your `.cpp` file. Make sure to create header file called `<CPPFILENAME>_ver.h` in the folder where your `.cpp` file is located and `#include`-ed into it. It must have content provided below. `last_success_build` and `const int build` will get updated automatically before the compilation. If the build fails due to errors, `const int build` will be decremented and so, will not change until you fix the errors:
 ```
@@ -60,7 +60,7 @@ const int build = 0;
 14. You might also want to add Notepad++ `Program Files` installation folder to your `Path` or just paste the full path to the `Notepad++.exe` in this line `if "%asm%"=="/FAcsu" notepad++ %name%.cod & goto :cleanup`
 15. Profit! You are ready for rapid C/C++ development in Notepad++!
 
-You can control compilation easily from the sourcefile itself by including comment in the top of your source file like this:
+You can control compilation easily from the source file itself by including comment in the top of your source file like this:
 ```
 // CONSOLE DBG NOPT
 ```
@@ -74,11 +74,11 @@ You can control compilation easily from the sourcefile itself by including comme
 
 `SLIB` - compile as static library
 
-`ASM` - instead of compiling to `.exe` file, opem MASM code created by the compiler in Notepad++ (aka. your own Compiler Explorer)
+`ASM` - instead of compiling to `.exe` file, open MASM code created by the compiler in Notepad++ (aka. your own Compiler Explorer)
 
 `DBG` - compile in debug mode and launch resulting executable with `sddbg` debugger
 
-`NLAUNCH` - just compile, don't lauch the executable
+`NLAUNCH` - just compile, don't launch the executable
 
 `BINC` - use Automatic Build Incrementor utility
 
