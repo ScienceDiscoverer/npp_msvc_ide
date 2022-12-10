@@ -24,7 +24,7 @@ How to setup:
 </UserDefinedCommands>
  ```
 3. Copy the contents of `plugins/config` repo folder into your `plugins/config` folder located in `C:\Users\<USERNAME>\AppData\Roaming\Notepad++\plugins\config`. Relaunch Notepad++ for changes to take effect.
-4. Install [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (YES, you don't even need the bloated IDE itself!) or if you have Visual Studio already installed, skip
+4. Install [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (*YES, you don't even need the bloated IDE itself!*) or if you have Visual Studio already installed, skip
 5. Set up environment variables, type in your Start menu: `x64 Native Tools Command Prompt for VS 2022`, launch it.
 6. Copy and paste following lines into the console. After each command, Ctrl+V the result into your `msvc_build.cmd` file, after the `@echo off` line:
 ```
