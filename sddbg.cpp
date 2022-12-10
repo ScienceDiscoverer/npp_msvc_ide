@@ -33,6 +33,8 @@
 #define COL_TRACE_SYMB SetConsoleTextAttribute(oh, COL_YEL);
 #define COL_TRACE_LINE SetConsoleTextAttribute(oh, COL_CAY);
 
+using namespace std;
+
 WORD col_def;
 
 DWORD decision(DWORD chance)

@@ -246,27 +246,35 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 			std::cout << ": 0x" << std::hex
 				<< std::uppercase << er->ExceptionInformation[i] << std::endl;
 		}
-
-		ui64 hinst = er->ExceptionInformation[3];
-		DWORD *obj_inf = (DWORD *)er->ExceptionInformation[2];
-		// std::cout << std::hex	<< std::uppercase << obj_inf[0] << std::endl;
-		// std::cout << obj_inf[1] << std::endl;
-		// std::cout << obj_inf[2] << std::endl;
-		// std::cout << obj_inf[3] << std::endl;
-		// std::cout << "-----------------------------" << std::endl;
-		obj_inf = (DWORD *)(hinst + obj_inf[3]);
-		// std::cout << obj_inf[0] << std::endl;
-		// std::cout << obj_inf[1] << std::endl;
-		// std::cout << "-----------------------------" << std::endl;
-		obj_inf = (DWORD *)(hinst + obj_inf[1]);
-		// std::cout << obj_inf[0] << std::endl;
-		// std::cout << obj_inf[1] << std::endl;
-		// std::cout << "-----------------------------" << std::endl;
-		ui64 *class_inf = (ui64 *)(hinst + obj_inf[1]);
-		// std::cout << class_inf[0] << std::endl;
-		// std::cout << class_inf[1] << std::endl;
-		// std::cout << class_inf[2] << std::endl;
-		char *class_name = (char *)(class_inf + 2);
+		
+		char *class_name = NULL;
+		__try
+		{
+			ui64 hinst = er->ExceptionInformation[3];
+			DWORD *obj_inf = (DWORD *)er->ExceptionInformation[2];
+			//std::cout << std::hex << std::uppercase << obj_inf[0] << std::endl;
+			//std::cout << obj_inf[1] << std::endl;
+			//std::cout << obj_inf[2] << std::endl;
+			//std::cout << obj_inf[3] << std::endl;
+			// std::cout << "-----------------------------" << std::endl;
+			obj_inf = (DWORD *)(hinst + obj_inf[3]);
+			// std::cout << obj_inf[0] << std::endl;
+			// std::cout << obj_inf[1] << std::endl;
+			// std::cout << "-----------------------------" << std::endl;
+			obj_inf = (DWORD *)(hinst + obj_inf[1]);
+			// std::cout << obj_inf[0] << std::endl;
+			// std::cout << obj_inf[1] << std::endl;
+			// std::cout << "-----------------------------" << std::endl;
+			ui64 *class_inf = (ui64 *)(hinst + obj_inf[1]);
+			// std::cout << class_inf[0] << std::endl;
+			// std::cout << class_inf[1] << std::endl;
+			// std::cout << class_inf[2] << std::endl;
+			class_name = (char *)(class_inf + 2);
+		}
+		__except(1)
+		{
+			class_name = (char *)"CRASH WHILE TRYING TO GET!";
+		}
 		
 		std::cout << "CPP EXPT CLASS NAME: " << class_name << std::hex << std::uppercase << std::endl;
 		std::cout << "CURRENT EXE HIN:     " << "0x" << GetModuleHandle(NULL) << std::endl;
@@ -364,6 +372,9 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 		}
 		HeapFree(heap, 0, buff);
 	}	break;
+	case EXCEPTION_DARR_OUT_OF_RANGE:
+		std::cout << "EXCEPTION_T2I_NON_NUMBER" << std::endl;
+		break;
 	default:
 		std::cout << "UNKNOWN_EXCEPTION [" << std::hex << std::uppercase << c << "]" << std::endl;
 		break;
@@ -372,7 +383,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 	std::cout << def << "CONTINUE EXECUTION:  ";
 	if(er->ExceptionFlags == EXCEPTION_NONCONTINUABLE)
 	{
-		std::cout << red << "NOT";
+		std::cout << red << "NOT ";
 	}
 	else
 	{
