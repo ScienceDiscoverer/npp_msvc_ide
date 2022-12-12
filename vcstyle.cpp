@@ -6,7 +6,8 @@
 
 #pragma warning( pop )
 
-// #include "sddb.h"
+//#include <sddb>
+//#include <fstream>
 
 bool lncol(LPCSTR t, LPCSTR te) // ....([0-9].....
 {
@@ -83,9 +84,11 @@ void styleDiagnostics(LPCSTR txt, SIZE_T l)
 	LPCSTR code_end = NULL;
 	
 	LPCSTR te = txt + l;
+	
 	SIZE_T lines = 0;
 	SIZE_T line = 0;
 	--txt;
+
 	while(++txt != te)
 	{
 		++line;
@@ -124,18 +127,18 @@ void styleDiagnostics(LPCSTR txt, SIZE_T l)
 			if(*txt == ' ')
 			{
 				line_col = true;
-				if(*(txt+1) == 'e')
+				if(*(txt+1) == 'e') // error CXXXX:
 				{
 					ew_col = r;
 					error_level |= 0x1;
 				}
-				else if(*(txt+1) == 'f')
+				else if(*(txt+1) == 'f') // ????????????
 				{
 					ew_col = r;
 					error_level |= 0x1;
 					--ew_space;
 				}
-				else
+				else // warning CXXXX:
 				{
 					ew_col = y;
 					error_level |= 0x2;
@@ -317,13 +320,62 @@ void styleDiagnostics(LPCSTR txt, SIZE_T l)
 			if(!code && *txt == '\n') // Find start of code sample
 			{
 				cpars = CODE;
-				
 				code_end = txt;
 				while(++code_end != te && *code_end != '\n') // Find code snippet end
 				{
-					;
+					if(*code_end == '.') // Check if the code + code_end is entirely missing
+					{
+						LPCSTR tmp_lncol = code_end;
+						while(++tmp_lncol != te && *tmp_lncol != '(' && *tmp_lncol != '\n')
+						{
+							;
+						}
+						
+						if(*tmp_lncol == '(')
+						{
+							while(++tmp_lncol != te && *tmp_lncol != ',')
+							{
+								if(*tmp_lncol < '0' || *tmp_lncol > '9')
+								{
+									break;
+								}
+							}
+							
+							if(*tmp_lncol == ',')
+							{
+								while(++tmp_lncol != te && *tmp_lncol != ')')
+								{
+									if(*tmp_lncol < '0' || *tmp_lncol > '9')
+									{
+										break;
+									}
+								}
+								
+								if(*tmp_lncol == ')' && ++tmp_lncol != te && *tmp_lncol == ':')
+								{
+									SetConsoleTextAttribute(oh, d);
+									PC("\n"); // Add new line for readability
+									++lines; // I forgot to add this. Was debugging for good hour...
+									
+									// Parsing block finished
+									line_col = false;
+									err_war = false;
+									code = false;
+									entry_end = true; // Error/Warning has ended
+									cpars = NORM_TXT;
+									goto loop_continue;
+								}
+							}
+						}
+					}
 				}
 				LPCSTR caret = code_end;
+				
+				if(caret == te) // End of the input was reached
+				{
+					goto loop_continue;
+				}
+				
 				while(++caret != te && *caret != '^') // Find caret
 				{
 					;
@@ -404,7 +456,7 @@ int wmain(/* int argc, wchar_t**argv */)
 	SIZE_T txtl = 0; // Current length of text array
 	HANDLE heap = GetProcessHeap();
 	LPSTR txt = (LPSTR)HeapAlloc(heap, NULL, txts);
-	
+
 	PC("\n");
 	PC("\n");
 	
@@ -432,7 +484,7 @@ int wmain(/* int argc, wchar_t**argv */)
 	// Pipe end also disables system("pause") command!
 	
 	styleDiagnostics(txt, rd_tot);
-	
+
 	HeapFree(heap, NULL, txt);
 	
 	return error_level & 0x1 ? 1 : error_level & 0x2 ? 2 : 0;

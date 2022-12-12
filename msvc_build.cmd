@@ -1,14 +1,6 @@
 @echo off
 
-
-REM YOUR SET PATH GOES HERE
-
-REM YOUR SET INCLUDE GOES HERE
-
-REM YOUR SET LIB GOES HERE
-
-REM YOUR SET LIBPATH GOES HERE
-
+set "path=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.34.31933\bin\HostX64\x64;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\VC\VCPackages;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer;C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\bin\Roslyn;C:\Program Files\Microsoft Visual Studio\2022\Community\Team Tools\Performance Tools\x64;C:\Program Files\Microsoft Visual Studio\2022\Community\Team Tools\Performance Tools;C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64\;C:\Program Files (x86)\HTML Help Workshop;C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\\x64;C:\Program Files (x86)\Windows Kits\10\bin\\x64;C:\Program Files\Microsoft Visual Studio\2022\Community\\MSBuild\Current\Bin\amd64;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\;C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\;%path%"
 
 set "name=%1"
 set "ico_name=%name%"
@@ -87,6 +79,7 @@ lib /NOLOGO /VERBOSE /OUT:%name%d.lib %name%.obj ) else (
 lib /NOLOGO /VERBOSE %name%.obj
 set "debug=/MDd /Z7" & set "debug_link=/DEBUG" & set "debug_def=/D DEBUG"
 goto :recompile )
+
 if %ERRORLEVEL% NEQ 0 ( pause > nul & goto :cleanup ) else ( goto :cleanup ) )
 
 ::pause > nul
@@ -95,8 +88,7 @@ if "%debug_link%"=="/DEBUG" start sddbg %name%.exe & goto :cleanup
 
 if "%no_launch%"=="" start "%name%" %name%.exe
 :cleanup
-del %name%.obj
-del ico\res.rc ico\res.res
-taskkill /f /im cmd.exe /fi "windowtitle eq Select sd_msvc_build" > nul
-taskkill /f /im cmd.exe /fi "windowtitle eq Administrator: sd_msvc_build" > nul
-taskkill /f /im cmd.exe /fi "windowtitle eq sd_msvc_build"
+del %name%.obj > nul 2>&1
+del ico\res.rc ico\res.res > nul 2>&1
+
+for /f "tokens=2 delims=," %%a in ('tasklist /fi "imagename eq cmd.exe" /v /fo:csv /nh ^| findstr /r ".*sd_msvc_build[^,]*$"') do taskkill /pid %%a > nul 2>&1
