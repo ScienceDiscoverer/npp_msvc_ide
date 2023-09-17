@@ -6,7 +6,7 @@
 
 Open source alternative for MS Visual Studio, powered by `cl` compiler. Featuring no project files, simple build process, "soft" and "hard" debuggers and `mingw`-like error output styling.
 
-<img width="1000" height="582" src="readme/main.gif">
+<img src="readme/main.gif">
 
 ## How to build
 
