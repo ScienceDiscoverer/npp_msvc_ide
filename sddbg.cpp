@@ -1,81 +1,38 @@
 // CONSOLE
-//#include <iostream>
-//#include <sstream>
 #include <sddb>
+
 #include <dbghelp.h>
+#include <tlhelp32.h>
 
 #pragma comment( lib, "dbghelp" )
 #pragma comment( lib, "user32" )
 
-// TODO https://docs.microsoft.com/en-us/windows/win32/debug/debugging-a-running-process
 // TODO To cause a breakpoint exception in another process, use the DebugBreakProcess function.
 // TODO Implement fully custom StackWalk
 // TODO Implement custom PDB reader OR custom symbol exporting
 // TODO Visualise full process\thread memory map with DLLs, stack and heap
-// TODO Implement jump to source code via click
 
 // void DebugBreak(); Causes a breakpoint exception to occur in the current process. This allows the calling thread
 // to signal the debugger to handle the exception. But why, if I can use RaiseException?!
 // REASON: //KERNELBASE.dll!RaiseException+0x69 VS KERNELBASE.dll!DebugBreak+0x3 --> many useless code in RaiseExc!
 
-#define COL_END SetConsoleTextAttribute(oh, col_def);
+#define COL_END				p|D;
 	
-#define COL_THREAD SetConsoleTextAttribute(oh, COL_CAY);
-#define COL_DLL SetConsoleTextAttribute(oh, COL_VIO);
-#define COL_PROC SetConsoleTextAttribute(oh, COL_BLU);
-#define COL_STR SetConsoleTextAttribute(oh, COL_YEL);
-#define COL_DESPAWN SetConsoleTextAttribute(oh, COL_RED);
-#define COL_LOAD_SUCC SetConsoleTextAttribute(oh, COL_GRE);
-#define COL_LOAD_FAIL SetConsoleTextAttribute(oh, COL_RED);
+#define COL_THREAD			p|C;
+#define COL_DLL				p|V;
+#define COL_PROC			p|B;
+#define COL_STR				p|Y;
+#define COL_DESPAWN			p|R;
+#define COL_LOAD_SUCC		p|G;
+#define COL_LOAD_FAIL		p|R;
 
-#define COL_TRACE_PLUS SetConsoleTextAttribute(oh, COL_VIO);
-#define COL_TRACE_OFFSET SetConsoleTextAttribute(oh, COL_BLU);
-#define COL_TRACE_SYMB SetConsoleTextAttribute(oh, COL_YEL);
-#define COL_TRACE_LINE SetConsoleTextAttribute(oh, COL_CAY);
+#define COL_TRACE_PLUS		p|V;
+#define COL_TRACE_OFFSET	p|B;
+#define COL_TRACE_SYMB		p|Y;
+#define COL_TRACE_LINE		p|C;
 
-using namespace std;
-
-WORD col_def;
-
-DWORD decision(DWORD chance)
-{
-	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
-	
-	fkcursor();
-	wcout << cay << "H" << def << "ANDLE | ";
-	wcout << gre << "I" << def << "GNORE [";
-	
-	if(chance)
-	{
-		wcout << gre << "FIRST CHANCE" << def;
-	}
-	else
-	{
-		wcout << red << "FINAL CHANCE" << def;
-	}
-	
-	cout << ']' << endl;
-	
-	while(1)
-	{
-		
-		int ch = _getch();
-		
-		switch(ch)
-		{
-		case 'h':
-		case 'H':
-			okcursor();
-			return DBG_CONTINUE;
-		case 'i':
-		case 'I':
-			okcursor();
-			return DBG_EXCEPTION_NOT_HANDLED;
-		default:
-			break;
-		}
-	}
-}
+cstr vc_source = L(
+	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.34.31933\\crt\\src\\vcruntime\\");
 
 typedef struct _DLL_LIST_ITEM
 {
@@ -86,214 +43,115 @@ typedef struct _DLL_LIST_ITEM
 	struct _DLL_LIST_ITEM *next;
 } DLL_LIST_ITEM;
 
-void dllAttach(DLL_LIST_ITEM **root, LPCWSTR name, LPVOID base, DWORD id)
-{
-	DLL_LIST_ITEM *head = *root;
-	
-	if(head != NULL)
-	{
-		while(head->next != NULL)
-		{
-			head = head->next;
-		}
-	}
-	
-	static HANDLE heap = GetProcessHeap();
-	LPVOID nh = NULL;
-	if(name != NULL)
-	{
-		SIZE_T l = wcslen(name) + 1;
-		nh = HeapAlloc(heap, 0, l * sizeof(wchar_t));
-		CopyMemory(nh, name, l * sizeof(wchar_t));
-	}
-	
-	DLL_LIST_ITEM tmp;
-	tmp.n = (LPWSTR)nh;
-	tmp.b = base;
-	tmp.en = 0;
-	tmp.id = id;
-	tmp.next = NULL;
-	LPVOID ih = HeapAlloc(heap, 0, sizeof(DLL_LIST_ITEM));
-	CopyMemory(ih, &tmp, sizeof(DLL_LIST_ITEM));
-	
-	if(head == NULL)
-	{
-		*root = (DLL_LIST_ITEM *)ih;
-	}
-	else
-	{
-		head->next = (DLL_LIST_ITEM *)ih;
-	}
-}
-
-void dllDestoryList(DLL_LIST_ITEM **root)
-{
-	DLL_LIST_ITEM *cur = *root;
-	while(cur != NULL)
-	{
-		DLL_LIST_ITEM *tmp = cur;
-		static HANDLE heap = GetProcessHeap();
-		HeapFree(heap, 0, cur->n);
-		HeapFree(heap, 0, cur);
-		cur = tmp->next;
-	}
-	*root = NULL;
-}
-
 DLL_LIST_ITEM *dlls;
 DLL_LIST_ITEM *threads;
 DLL_LIST_ITEM *procs;
 
-HANDLE fndHandle(DWORD id, DLL_LIST_ITEM *what)
-{
-	DLL_LIST_ITEM *itm = what;
-	while(itm != 0)
-	{
-		if(itm->id == id)
-		{
-			return (HANDLE)itm->b;
-		}
-		
-		itm = itm->next;
-	}
-	
-	return NULL;
-}
-
-LPWSTR fndProcName(DWORD id)
-{
-	DLL_LIST_ITEM *itm = procs;
-	while(itm != 0)
-	{
-		if(itm->id == id)
-		{
-			return itm->n;
-		}
-		
-		itm = itm->next;
-	}
-	
-	return NULL;
-}
-
-DWORD * getProcExceptStat(DWORD id)
-{
-	DLL_LIST_ITEM *itm = procs;
-	while(itm != 0)
-	{
-		if(itm->id == id)
-		{
-			return &itm->en;
-		}
-		
-		itm = itm->next;
-	}
-	
-	static DWORD dummy;
-	dummy = 0;
-	return &dummy;
-}
-
-LPCSTR stripPath(LPCSTR path)
-{
-	SIZE_T l = strlen(path);
-	LPCSTR lslash = path+l; // Null wchar aka. Path End
-	while(*(--lslash) != L'\\' && lslash >= path)
-	{
-		;
-	}
-	
-	return lslash + 1;
-}
-
-void checkSymType(SYM_TYPE t)
-{
-	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
-	
-	COL_LOAD_SUCC
-	switch(t)
-	{
-	case SymCoff: /* = 0 */
-		wcout << " COFF LOADED!";
-		break;
-	case SymCv:
-		wcout << " CODEVIEW LOADED!";
-		break;
-	case SymDeferred:
-		wcout << " LOADING DEFERRED!";
-		break;
-	case SymDia:
-		wcout << " DIA LOADED!";
-		break;
-	case SymExport:
-		wcout << " DLL EXPORT LOADED!";
-		break;
-	case SymPdb:
-		wcout << " PDB LOADED!";
-		break;
-	case SymSym:
-		wcout << " SYM LOADED!";
-		break;
-	case SymVirtual:
-		wcout << " SYM VIRTUAL BS!";
-		break;
-	case NumSymTypes:
-		wcout << " NUMSYMTYPES BS!";
-		break;
-	case SymNone:
-		COL_LOAD_FAIL
-		wcout << " NO SYMBOLS FOUND...";
-		break;
-	default:
-		break;
-	}
-	COL_END
-	wcout << endl;
-}
-
-BOOL __declspec(nothrow) readProcMemCallback(HANDLE ph, DWORD64 baddr, PVOID buff, DWORD sz, LPDWORD bread)
-{
-	return ReadProcessMemory(ph, (LPCVOID)baddr, buff, sz, (SIZE_T *)bread);
-}
+DWORD decision(DWORD chance);
+void dllAttach(DLL_LIST_ITEM **root, LPCWSTR name, LPVOID base, DWORD id);
+void dllDestoryList(DLL_LIST_ITEM **root);
+HANDLE fndHandle(DWORD id, DLL_LIST_ITEM *what);
+LPWSTR fndProcName(DWORD id);
+DWORD * getProcExceptStat(DWORD id);
+cstr stripPath(LPCSTR path);
+void checkSymType(SYM_TYPE t);
+BOOL __declspec(nothrow) readProcMemCallback(HANDLE ph, DWORD64 baddr, PVOID buff, DWORD sz, LPDWORD bread);
+bool fileExists(const char *fn);
+BOOL WINAPI onExitHandler(DWORD ctrl_sig) noexcept;
+txt getProcPath(DWORD pid);
 
 int wmain(int argc, wchar_t **argv)
 {
-	if(argc < 2 || argc > 2)
-	{
-		return 1;
-	}
-	
 	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
 	static CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(oh, &csbi);
-	col_def = csbi.wAttributes;
 	COORD buf = csbi.dwSize;
 	buf.Y = 9000;
 	SetConsoleScreenBufferSize(oh, buf);
+	SetConsoleCtrlHandler(onExitHandler, TRUE);
 	
 	SetConsoleTitle(L"SDDBG");
 	
-	STARTUPINFOW si;
-	PROCESS_INFORMATION pi;
-
-	memset(&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	memset(&pi, 0, sizeof(pi));
+engage_inject_mode:
 	
-	// Create Process ========================================================================================
-	BOOL res = CreateProcessW(
-		argv[1],				//  [I|O]  Name of the module to be executed, that's it
-		NULL,					// [IO|O]  Command line to be exectued, searches PATH, adds extention
-		NULL,					//  [I|O]  Sec. Attrib. for inhereting new process by child processes
-		NULL,					//  [I|O]  Sec. Attrib. for inhereting new thread by child processes
-		FALSE,					//    [I]  New proc. inherits each inheritable handle
-		CREATE_NEW_CONSOLE |
-		DEBUG_PROCESS,			//    [I]  Process creation flags
-		NULL,					//  [I|O]  Ptr to environment block of new process (inherit if NULL)
-		NULL,					//  [I|O]  Full path to current directory for the process
-		&si,					//    [I]  Ptr to STARTUPINFO struct, if dwFlags = 0, def. values used
-		&pi);					//    [O]  Ptr to PROCESS_INFORMATION struct with new proc identification info
-	// =======================================================================================================
+	BOOL res = FALSE;
+	static STARTUPINFOW si;
+	static PROCESS_INFORMATION pi;
+	
+	if(argc != 2)
+	{
+		p|"Move "|G|"MOUSE POINTER"|D|" over process "|B|"WINDOW"|D|" to be attached and press "|Y|"ANY KEY"|D|"..."|P;
+		
+		POINT pnt;
+		GetCursorPos(&pnt);
+		HWND wnd = WindowFromPoint(pnt);
+		DWORD pid;
+		GetWindowThreadProcessId(wnd, &pid);
+		
+		if(getProcPath(pid) == L("C:\\Windows\\System32\\cmd.exe"))
+		{
+			HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);		
+			PROCESSENTRY32 lppe;						//	struct tagPROCESSENTRY32
+			lppe.dwSize = sizeof(PROCESSENTRY32);		//	DWORD		dwSize;
+			if(!Process32First(snap, &lppe))			//	DWORD		cntUsage;
+			{											//	DWORD		th32ProcessID;
+				p|PE|" in Process32First"|N|P;			//	ULONG_PTR	th32DefaultHeapID;
+				return 1;								//	DWORD		th32ModuleID;
+			}											//	DWORD		cntThreads;
+			do											//	DWORD		th32ParentProcessID
+			{											//	LONG		pcPriClassBase;
+				if(lppe.th32ParentProcessID == pid)		//	DWORD		dwFlags;
+				{										//	CHAR		szExeFile[MAX_PATH];
+					if(getProcPath(lppe.th32ProcessID) == L("C:\\Windows\\System32\\conhost.exe"))
+					{
+						continue;
+					}
+					
+					pid = lppe.th32ProcessID;
+					goto proc_attach;
+				}
+			}
+			while(Process32Next(snap, &lppe));
+			CloseHandle(snap);
+			
+			p|R|"Failed to find console process in CMD "|B|pid|R|"!"|N|P;
+			return 1;
+		}
+		
+	proc_attach:
+		if(!DebugActiveProcess(pid))
+		{
+			p|PE|N;
+			p|R|"Failed to attach to process "|B|pid|R|"!"|N|P;
+			return 1;
+		}
+		
+		SetConsoleCursorPosition(oh, { 0, 0 });
+		p|S(100);
+		SetConsoleCursorPosition(oh, { 0, 0 });
+		// To detach from the process being debugged, the debugger should use the DebugActiveProcessStop function.
+	}
+	else
+	{
+		memset(&si, 0, sizeof(si));
+		si.cb = sizeof(si);
+		memset(&pi, 0, sizeof(pi));
+		
+		// Create Process ========================================================================================
+		res = CreateProcessW(
+			argv[1],				//  [I|O]  Name of the module to be executed, that's it
+			NULL,					// [IO|O]  Command line to be exectued, searches PATH, adds extention
+			NULL,					//  [I|O]  Sec. Attrib. for inhereting new process by child processes
+			NULL,					//  [I|O]  Sec. Attrib. for inhereting new thread by child processes
+			FALSE,					//    [I]  New proc. inherits each inheritable handle
+			CREATE_NEW_CONSOLE |
+			DEBUG_PROCESS,			//    [I]  Process creation flags
+			NULL,					//  [I|O]  Ptr to environment block of new process (inherit if NULL)
+			NULL,					//  [I|O]  Full path to current directory for the process
+			&si,					//    [I]  Ptr to STARTUPINFO struct, if dwFlags = 0, def. values used
+			&pi);					//    [O]  Ptr to PROCESS_INFORMATION struct with new proc identification info
+		// =======================================================================================================
+	}
 	
 	//DEBUG_ONLY_THIS_PROCESS 0x00000002 ---> To ignore child procs created by debugee
 	
@@ -334,8 +192,7 @@ int wmain(int argc, wchar_t **argv)
 			pexcept(&de.u.Exception.ExceptionRecord, hp);
 			
 			HANDLE ht = fndHandle(de.dwThreadId, threads);
-			wcout << "PROCESS: " << fndProcName(de.dwProcessId) << " (" << dec << de.dwProcessId
-				<< ") THREAD: " << de.dwThreadId << endl << endl;
+			p|"PROCESS: "|fndProcName(de.dwProcessId)|" ("|de.dwProcessId|") THREAD: "|de.dwThreadId|N|N;
 			
 			// Skip regs/stack listing for first info. exception generated by kernel for each process
 			if(de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT &&
@@ -368,30 +225,22 @@ int wmain(int argc, wchar_t **argv)
 			res = GetThreadContext(ht, &cx);
 			if(!res)
 			{
-				perr();
-				wcout <<  "GETTHREADCONTEXT FAILED!" << endl;
+				p|PE|N;
+				p|R|"GETTHREADCONTEXT FAILED!"|D|N;
 			}
 			
-			wcout << "RIP  0x" << hex << uppercase << setw(16) << setfill(L'0') <<
-				cx.Rip << "  RSP  0x" << setw(16) << setfill(L'0') << cx.Rsp << endl;
-			wcout << "EFL  0x" << setw(8) << setfill(L'0') << cx.EFlags << endl << endl;
+			p|"RIP  0x"|H|cx.Rip|"  RSP  0x"|H|cx.Rsp|N;
+			p|"EFL  0x"|H|cx.EFlags|N|N;
 			
-			wcout << "RAX  0x" << setw(16) << setfill(L'0') << cx.Rax << "  RBX  0x" <<
-				setw(16) << setfill(L'0') << cx.Rbx << endl;
-			wcout << "RCX  0x" << setw(16) << setfill(L'0') << cx.Rcx << "  RDX  0x" <<
-				setw(16) << setfill(L'0') << cx.Rdx << endl;
-			wcout << "RSI  0x" << setw(16) << setfill(L'0') << cx.Rsi << "  RDI  0x" <<
-				setw(16) << setfill(L'0') << cx.Rdi << endl;
-			wcout << "RBP  0x" << setw(16) << setfill(L'0') << cx.Rbp << endl << endl;
+			p|"RAX  0x"|H|cx.Rax|"  RBX  0x"|H|cx.Rbx|N;
+			p|"RCX  0x"|H|cx.Rcx|"  RDX  0x"|H|cx.Rdx|N;
+			p|"RSI  0x"|H|cx.Rsi|"  RDI  0x"|H|cx.Rdi|N;
+			p|"RBP  0x"|H|cx.Rbp|N|N;
 			
-			wcout << "R08  0x" << setw(16) << setfill(L'0') << cx.R8 << "  R09  0x" <<
-				setw(16) << setfill(L'0') << cx.R9 << endl;
-			wcout << "R10  0x" << setw(16) << setfill(L'0') << cx.R10 << "  R11  0x" <<
-				setw(16) << setfill(L'0') << cx.R11 << endl;
-			wcout << "R12  0x" << setw(16) << setfill(L'0') << cx.R12 << "  R13  0x" <<
-				setw(16) << setfill(L'0') << cx.R13 << endl;
-			wcout << "R14  0x" << setw(16) << setfill(L'0') << cx.R14 << "  R15  0x" <<
-				setw(16) << setfill(L'0') << cx.R15 << endl << endl;
+			p|"R08  0x"|H|cx.R8|"  R09  0x"|H|cx.R9|N;
+			p|"R10  0x"|H|cx.R10|"  R11  0x"|H|cx.R11|N;
+			p|"R12  0x"|H|cx.R12|"  R13  0x"|H|cx.R13|N;
+			p|"R14  0x"|H|cx.R14|"  R15  0x"|H|cx.R15|N|N;
 			
 			/* typedef struct _tagSTACKFRAME64 {
 				ADDRESS64   AddrPC;               // program counter
@@ -480,7 +329,7 @@ int wmain(int argc, wchar_t **argv)
 			psi->MaxNameLen = MAX_SYM_NAME;
 			DWORD64 displace;
 			
-			wcout << "STACK TRACE" << endl;
+			p|"STACK TRACE"|N;
 			
 			do
 			{
@@ -494,18 +343,17 @@ int wmain(int argc, wchar_t **argv)
 				SymFromAddr(hp, sf.AddrPC.Offset, &displace, psi);
 				
 				
-				wcout << "0x" << hex << uppercase << setw(16) << setfill(L'0')
-					<< psi->Address;
+				p|"0x"|H|psi->Address;
 				COL_TRACE_PLUS
-				wcout << "+";
+				p|"+";
 				COL_TRACE_OFFSET
-				wcout << "0x" << displace;
+				p|"0x"|H|displace;
 				COL_END
-				wcout << "|" << stripPath(mi.LoadedImageName) << "|";
+				p|"|"|stripPath(mi.LoadedImageName)|"|";
 				COL_TRACE_SYMB
-				wcout << psi->Name;
+				p|psi->Name;
 				COL_END
-				wcout << "|";
+				p|"|";
 				
 				IMAGEHLP_LINE64 ln;
 				ln.SizeOfStruct = sizeof(ln);
@@ -514,14 +362,30 @@ int wmain(int argc, wchar_t **argv)
 				
 				if(res)
 				{
-					wcout << stripPath(ln.FileName) << "(" << dec;
+					p|stripPath(ln.FileName)|"(";
 					COL_TRACE_LINE
-					wcout << ln.LineNumber;
+					p|ln.LineNumber;
 					COL_END
-					wcout << ")";
+					p|")";
+					
+					txt std_lib_src;
+					if(!fileExists(ln.FileName)) // Try to find file in VS sources
+					{
+						std_lib_src = vc_source;
+						std_lib_src += stripPath(ln.FileName);
+						ln.FileName = (char *)std_lib_src;
+					}
+					
+					if(fileExists(ln.FileName)) // Jump to line in Notepad++
+					{
+						_dbgOpenFile(ln.FileName);
+						_dbgSelLine(ln.LineNumber);
+					}
+					p|DC|P;
+					//_dbgCleanSelects();
 				}
 				
-				wcout << endl;
+				p|N;
 				
 				res = StackWalk64(
 					IMAGE_FILE_MACHINE_AMD64,
@@ -541,7 +405,7 @@ int wmain(int argc, wchar_t **argv)
 			while(sf.AddrReturn.Offset != 0);
 				
 			HeapFree(GetProcessHeap(), 0, psi);
-			wcout << endl;
+			p|N;
 		}
 			
 			continue_status = decision(de.u.Exception.dwFirstChance);
@@ -554,10 +418,9 @@ int wmain(int argc, wchar_t **argv)
 			//} CREATE_THREAD_DEBUG_INFO, *LPCREATE_THREAD_DEBUG_INFO;
 			dllAttach(&threads, NULL, (LPVOID)de.u.CreateThread.hThread, de.dwThreadId);
 			COL_THREAD;
-			wcout << "THREAD SPAWNED";
+			p|"THREAD SPAWNED";
 			COL_END;
-			wcout << " BY " << fndProcName(de.dwProcessId) << ": "
-				<< "0x" << de.u.CreateThread.lpThreadLocalBase << " ID: " << dec << de.dwThreadId << endl;
+			p|" BY "|fndProcName(de.dwProcessId)|": 0x"|H|de.u.CreateThread.lpThreadLocalBase|" ID: "|de.dwThreadId|N;
 			continue_status = DBG_EXCEPTION_NOT_HANDLED;
 			break;
 		case CREATE_PROCESS_DEBUG_EVENT: /* 3 */
@@ -579,13 +442,22 @@ int wmain(int argc, wchar_t **argv)
 			//PROCESS SPAWNED: 27096 000000000014F140 PDB LOADED! DBG: 0
 			
 			COL_PROC
-			wcout << "PROCESS SPAWNED";
+			
+			if(argc != 2)
+			{
+				p|"ATTACHED TO PROCESS";
+			}
+			else
+			{
+				p|"PROCESS SPAWNED";
+			}
+			
 			COL_END
-			wcout << ": ";
+			p|": ";
 		{
 			wchar_t nm[MAX_PATH];
 			GetFinalPathNameByHandle(de.u.CreateProcessInfo.hFile, nm, MAX_PATH, 0);
-			wcout << nm + 4 << " ID: " << dec << de.dwProcessId; // Skip '\\?\' syntax
+			p|nm + 4|" ID: "|de.dwProcessId; // Skip '\\?\' syntax
 			
 			SymInitialize(de.u.CreateProcessInfo.hProcess, NULL, FALSE);
 			SymLoadModuleExW(
@@ -613,10 +485,9 @@ int wmain(int argc, wchar_t **argv)
 			// de.u.CreateProcessInfo.nDebugInfoSize -> Useless. Probably legacy info (always 0)
 			CloseHandle(de.u.CreateProcessInfo.hFile);
 			COL_THREAD
-			wcout << "MAIN THREAD";
+			p|"MAIN THREAD";
 			COL_END
-			wcout << ": " << "0x" << de.u.CreateProcessInfo.lpThreadLocalBase 
-				<< " ID: " << dec << de.dwThreadId << endl;
+			p|": 0x"|H|de.u.CreateProcessInfo.lpThreadLocalBase|" ID: "|de.dwThreadId|N;
 			dllAttach(&threads, NULL, (LPVOID)de.u.CreateProcessInfo.hThread, de.dwThreadId);
 			
 			SIZE_T l = wcslen(nm);
@@ -634,10 +505,9 @@ int wmain(int argc, wchar_t **argv)
 			//  DWORD dwExitCode;
 			//} EXIT_THREAD_DEBUG_INFO, *LPEXIT_THREAD_DEBUG_INFO;
 			COL_DESPAWN
-			wcout << "THREAD DIED";
+			p|"THREAD DIED";
 			COL_END
-			wcout << " IN "  << fndProcName(de.dwProcessId) << ": "
-				<< dec << de.dwThreadId << " C: " << de.u.ExitThread.dwExitCode << endl;
+			p|" IN " |fndProcName(de.dwProcessId)|": "|de.dwThreadId|" C: "|de.u.ExitThread.dwExitCode|N;
 			
 			continue_status = DBG_EXCEPTION_NOT_HANDLED;
 			break;
@@ -646,13 +516,12 @@ int wmain(int argc, wchar_t **argv)
 			//  DWORD dwExitCode;
 			//} EXIT_PROCESS_DEBUG_INFO, *LPEXIT_PROCESS_DEBUG_INFO;
 			COL_DESPAWN
-			wcout << "PROCESS DIED";
+			p|"PROCESS DIED";
 			COL_END
-			wcout << ": " << fndProcName(de.dwProcessId) << " C: "
-				<< de.u.ExitProcess.dwExitCode << endl;
+			p|": "|fndProcName(de.dwProcessId)|" C: "|de.u.ExitProcess.dwExitCode|N;
 			
 			continue_status = DBG_EXCEPTION_NOT_HANDLED;
-			break;
+			goto stop_debugging;
 		case LOAD_DLL_DEBUG_EVENT:       /* 6 */
 			//typedef struct _LOAD_DLL_DEBUG_INFO {
 			//  HANDLE hFile;
@@ -663,14 +532,13 @@ int wmain(int argc, wchar_t **argv)
 			//  WORD   fUnicode;
 			//} LOAD_DLL_DEBUG_INFO, *LPLOAD_DLL_DEBUG_INFO;
 			COL_DLL
-			wcout << "DLL LOADED";
+			p|"DLL LOADED";
 			COL_END
-			wcout << " BY " << fndProcName(de.dwProcessId) << ": "
-				<< "0x" << hex << uppercase << de.u.LoadDll.lpBaseOfDll << ' ';
+			p|" BY "|fndProcName(de.dwProcessId)|": 0x"|H|de.u.LoadDll.lpBaseOfDll|' ';
 		{
 			wchar_t name[MAX_PATH];
 			GetFinalPathNameByHandle(de.u.LoadDll.hFile, name, MAX_PATH, 0);
-			wcout << name + 4; // Skip '\\?\' syntax
+			p|name + 4; // Skip '\\?\' syntax
 			dllAttach(&dlls, name + 4, de.u.LoadDll.lpBaseOfDll, 0);
 			
 			HANDLE hp = fndHandle(de.dwProcessId, procs);
@@ -707,20 +575,20 @@ int wmain(int argc, wchar_t **argv)
 			//  LPVOID lpBaseOfDll;
 			//} UNLOAD_DLL_DEBUG_INFO, *LPUNLOAD_DLL_DEBUG_INFO;
 			COL_DESPAWN
-			wcout << "DLL UNLOADED";
+			p|"DLL UNLOADED";
 			COL_END
-			wcout << " BY " << fndProcName(de.dwProcessId) << ": ";
+			p|" BY "|fndProcName(de.dwProcessId)|": ";
 			DLL_LIST_ITEM *dll = dlls;
 			while(dll != NULL)
 			{
 				if(dll->b == de.u.UnloadDll.lpBaseOfDll)
 				{
-					wcout << dll->n;
+					p|dll->n;
 					break;
 				}
 				dll = dll->next;
 			}
-			wcout << endl;
+			p|N;
 		}
 			continue_status = DBG_EXCEPTION_NOT_HANDLED;
 			break;
@@ -744,16 +612,16 @@ int wmain(int argc, wchar_t **argv)
 			if(de.u.DebugString.fUnicode)
 			{
 				COL_STR
-				wcout << "DEBUG WSTR";
+				p|"DEBUG WSTR";
 				COL_END
-				wcout << " BY " << fndProcName(de.dwProcessId) << ": |" << (LPWSTR)ds  << "|" << endl;
+				p|" BY "|fndProcName(de.dwProcessId)|": |"|(LPWSTR)ds|"|"|N;
 			}
 			else
 			{
 				COL_STR
-				wcout << "DEBUG WSTR";
+				p|"DEBUG WSTR";
 				COL_END
-				wcout << " BY " << fndProcName(de.dwProcessId) << ": |" << (LPSTR)ds  << "|" << endl;
+				p|" BY "|fndProcName(de.dwProcessId)|": |"|(LPSTR)ds|"|"|N;
 			}
 			
 			HeapFree(GetProcessHeap(), 0, ds);
@@ -761,7 +629,7 @@ int wmain(int argc, wchar_t **argv)
 		}	break;
 		case RIP_EVENT:                  /* 9 */
 			COL_DESPAWN
-			wcout << "RIP_EVENT ---> IGNORING!" << endl;
+			p|"RIP_EVENT ---> IGNORING!"|N;
 			COL_END
 			continue_status = DBG_EXCEPTION_NOT_HANDLED;
 			break;
@@ -772,15 +640,273 @@ int wmain(int argc, wchar_t **argv)
 		ContinueDebugEvent(de.dwProcessId, de.dwThreadId, continue_status);
 	}
 	
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
+stop_debugging:
+	
+	if(argc == 2)
+	{
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	}
 	
 	dllDestoryList(&dlls);
 	dllDestoryList(&threads);
 	
-	return 0;
+	p|TB|"Press any key to go into siphon mode..."|P|CLS;
+	
+	argc = 1;
+	goto engage_inject_mode;
+	
+	//return 0;
 }
 
+DWORD decision(DWORD chance)
+{
+	static HANDLE ih = GetStdHandle(STD_INPUT_HANDLE);
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	
+	p|DC|C|"H"|D|"ANDLE | ";
+	p|G|"I"|D|"GNORE [";
+	
+	if(chance)
+	{
+		p|G|"FIRST CHANCE"|D;
+	}
+	else
+	{
+		p|R|"FINAL CHANCE"|D;
+	}
+	
+	p|']'|N;
+	
+	while(1)
+	{
+		DWORD cmod;
+		GetConsoleMode(ih, &cmod);
+		SetConsoleMode(ih, cmod & 0xFFFFFFF9); // ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT)
+		char ch;
+		static DWORD bw;
+		ReadFile(ih, &ch, 1, &bw, NULL);
+		SetConsoleMode(ih, cmod);
+		
+		switch(ch)
+		{
+		case 'h':
+		case 'H':
+			p|RC;
+			return DBG_CONTINUE;
+		case 'i':
+		case 'I':
+			p|RC;
+			return DBG_EXCEPTION_NOT_HANDLED;
+		default:
+			break;
+		}
+	}
+}
+
+void dllAttach(DLL_LIST_ITEM **root, LPCWSTR name, LPVOID base, DWORD id)
+{
+	DLL_LIST_ITEM *head = *root;
+	
+	if(head != NULL)
+	{
+		while(head->next != NULL)
+		{
+			head = head->next;
+		}
+	}
+	
+	static HANDLE heap = GetProcessHeap();
+	LPVOID nh = NULL;
+	if(name != NULL)
+	{
+		SIZE_T l = wcslen(name) + 1;
+		nh = HeapAlloc(heap, 0, l * sizeof(wchar_t));
+		CopyMemory(nh, name, l * sizeof(wchar_t));
+	}
+	
+	DLL_LIST_ITEM tmp;
+	tmp.n = (LPWSTR)nh;
+	tmp.b = base;
+	tmp.en = 0;
+	tmp.id = id;
+	tmp.next = NULL;
+	LPVOID ih = HeapAlloc(heap, 0, sizeof(DLL_LIST_ITEM));
+	CopyMemory(ih, &tmp, sizeof(DLL_LIST_ITEM));
+	
+	if(head == NULL)
+	{
+		*root = (DLL_LIST_ITEM *)ih;
+	}
+	else
+	{
+		head->next = (DLL_LIST_ITEM *)ih;
+	}
+}
+
+void dllDestoryList(DLL_LIST_ITEM **root)
+{
+	DLL_LIST_ITEM *cur = *root;
+	while(cur != NULL)
+	{
+		DLL_LIST_ITEM *tmp = cur;
+		static HANDLE heap = GetProcessHeap();
+		HeapFree(heap, 0, cur->n);
+		HeapFree(heap, 0, cur);
+		cur = tmp->next;
+	}
+	*root = NULL;
+}
+
+HANDLE fndHandle(DWORD id, DLL_LIST_ITEM *what)
+{
+	DLL_LIST_ITEM *itm = what;
+	while(itm != 0)
+	{
+		if(itm->id == id)
+		{
+			return (HANDLE)itm->b;
+		}
+		
+		itm = itm->next;
+	}
+	
+	return NULL;
+}
+
+LPWSTR fndProcName(DWORD id)
+{
+	DLL_LIST_ITEM *itm = procs;
+	while(itm != 0)
+	{
+		if(itm->id == id)
+		{
+			return itm->n;
+		}
+		
+		itm = itm->next;
+	}
+	
+	return NULL;
+}
+
+DWORD * getProcExceptStat(DWORD id)
+{
+	DLL_LIST_ITEM *itm = procs;
+	while(itm != 0)
+	{
+		if(itm->id == id)
+		{
+			return &itm->en;
+		}
+		
+		itm = itm->next;
+	}
+	
+	static DWORD dummy;
+	dummy = 0;
+	return &dummy;
+}
+
+cstr stripPath(LPCSTR path)
+{
+	SIZE_T l = strl(path);
+	LPCSTR lslash = path+l; // Null wchar aka. Path End
+	LPCSTR end = lslash;
+	while(*(--lslash) != '\\' && lslash >= path)
+	{
+		// Do nothing...
+	}
+	
+	return cstr({ lslash + 1, (ui64)(end - lslash - 1) });
+}
+
+void checkSymType(SYM_TYPE t)
+{
+	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	
+	COL_LOAD_SUCC
+	switch(t)
+	{
+	case SymCoff: /* = 0 */
+		p|" COFF LOADED!";
+		break;
+	case SymCv:
+		p|" CODEVIEW LOADED!";
+		break;
+	case SymDeferred:
+		p|" LOADING DEFERRED!";
+		break;
+	case SymDia:
+		p|" DIA LOADED!";
+		break;
+	case SymExport:
+		p|" DLL EXPORT LOADED!";
+		break;
+	case SymPdb:
+		p|" PDB LOADED!";
+		break;
+	case SymSym:
+		p|" SYM LOADED!";
+		break;
+	case SymVirtual:
+		p|" SYM VIRTUAL BS!";
+		break;
+	case NumSymTypes:
+		p|" NUMSYMTYPES BS!";
+		break;
+	case SymNone:
+		COL_LOAD_FAIL
+		p|" NO SYMBOLS FOUND...";
+		break;
+	default:
+		break;
+	}
+	COL_END
+	p|N;
+}
+
+BOOL __declspec(nothrow) readProcMemCallback(HANDLE ph, DWORD64 baddr, PVOID buff, DWORD sz, LPDWORD bread)
+{
+	return ReadProcessMemory(ph, (LPCVOID)baddr, buff, sz, (SIZE_T *)bread);
+}
+
+bool fileExists(const char *fn)
+{
+	DWORD attr = GetFileAttributesA(fn);
+	if(attr == INVALID_FILE_ATTRIBUTES)
+	{
+		return false;
+	}
+	
+	return true;
+}
+
+BOOL WINAPI onExitHandler(DWORD ctrl_sig) noexcept
+{
+	if(ctrl_sig != CTRL_CLOSE_EVENT)
+	{
+		return FALSE;
+	}
+	
+	_dbgDeselectAll();
+	
+	return FALSE; // Handlers are added in a list FILO. Def. first. Returning FALSE calls next in a list
+}
+
+txt getProcPath(DWORD pid)
+{
+	txt name = MAX_PATH;
+	txtssz(name, MAX_PATH);
+	HANDLE proc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+	if(proc != NULL)
+	{
+		QueryFullProcessImageNameA(proc, 0, name, *name);
+		CloseHandle(proc);
+	}
+	
+	return name;
+}
 
 //DBG_CONTINUE 0x00010002L
 

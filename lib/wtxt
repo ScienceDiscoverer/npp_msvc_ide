@@ -1,0 +1,915 @@
+#pragma once
+
+#include <mmanip>
+
+#include "types.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#ifdef DEBUG
+	#pragma comment( lib, "wtxtd" )
+#else
+	#pragma comment( lib, "wtxt" )
+#endif
+
+#ifndef HEAP_MULTI_THREAD_MODE				// Can only use in 3 cases:
+	#define HEAP_FLAGS HEAP_NO_SERIALIZE	// Proc. with only one thread
+#else										// Proc. mult. threads but only 1 uses this heap
+	#define HEAP_FLAGS 0					// Proc. mult. threads with custom mutual exclusion
+#endif
+
+#define WTXT_UTF16
+
+#define TEND 0xFFFFFFFFFFFFFFFF		// Text MAX end position
+
+#define TXT_CONCAT_MULT 2
+
+#define EXCEPTION_TXT_BUFF_OVERRUN	0xE0000000
+#define EXCEPTION_T2I_NON_NUMBER	0xE0000001
+#define EXCEPTION_H2I_NON_NUMBER	0xE0000002
+#define EXCEPTION_T2I_OVERFLOW		0xE0000003
+#define EXCEPTION_H2I_OVERFLOW		0xE0000004
+#define EXCEPTION_TXTSP_P1_LESS_P0	0xE0000005
+#define EXCEPTION_TXTRP_P1_LESS_P0	0xE0000006
+
+#define EXCEPT_TXT_UTF8  0
+#define EXCEPT_TXT_UTF16 1
+
+#define WL(x) cwstr({ L##x, (sizeof(L##x)/2-1) })
+
+#define WTXT_ALLOC(x) (wchar_t *)HeapAlloc(wtxt::heap, 0, (x))
+#define WTXT_FREE(x) HeapFree(wtxt::heap, 0, (x))
+
+struct cwstr
+{
+	const wchar_t *t;
+	ui64 s;
+};
+
+class wtxt
+{
+public:
+	wtxt();
+	wtxt(const wtxt &o);
+	wtxt(wtxt &&o);
+	wtxt(cwstr cs);
+	explicit wtxt(char c);
+	explicit wtxt(wchar_t wc);
+	wtxt(ui64 ui);
+	wtxt(i64 i);
+	wtxt(i32 i);
+	
+	~wtxt();
+	
+	wtxt & operator=(const wtxt &o);
+	wtxt & operator=(wtxt &&o);
+	wtxt & operator=(cwstr cs);
+	wtxt & operator=(char c);
+	wtxt & operator=(wchar_t wc);
+	wtxt & operator=(ui64 ui);
+	wtxt & operator=(i64 i);
+	wtxt & operator=(i32 i);
+	
+	wchar_t & operator[](ui64 i);
+	const wchar_t & operator[](ui64 i) const;
+	
+	wtxt & operator+=(const wtxt &o);
+	wtxt & operator+=(cwstr cs);
+	wtxt & operator+=(wchar_t c);
+	
+	operator const wchar_t *() const;
+	operator wchar_t *();
+	
+	ui64 operator~() const;	// Size operator
+	uli32 * operator*();	// Size modification operator
+	ui64 operator!() const;	// True Size Operator
+	
+	friend bool64 operator==(const wtxt &t0, const wtxt &t1);
+	friend bool64 operator!=(const wtxt &t0, const wtxt &t1);
+	friend bool64 operator==(const wtxt &t, cwstr cs);
+	friend bool64 operator!=(const wtxt &t, cwstr cs);
+	friend bool64 operator==(cwstr cs, const wtxt &t);
+	friend bool64 operator!=(cwstr cs, const wtxt &t);
+	friend bool64 operator==(const wtxt &t, wchar_t c);
+	friend bool64 operator!=(const wtxt &t, wchar_t c);
+	friend bool64 operator==(wchar_t c, const wtxt &t);
+	friend bool64 operator!=(wchar_t c, const wtxt &t);
+	friend bool64 operator==(const wtxt &t, void (*empty_func)(void));
+	friend bool64 operator!=(const wtxt &t, void (*empty_func)(void));
+	friend bool64 operator==(void (*empty_func)(void), const wtxt &t);
+	friend bool64 operator!=(void (*empty_func)(void), const wtxt &t);
+	friend bool64 operator<(const wtxt &t0, const wtxt &t1);
+	friend bool64 operator>(const wtxt &t0, const wtxt &t1);
+	friend bool64 txtseq(const wtxt &t, ui64 pos, const wtxt &sub);				// Test if subtext at [pos] matches [sub]
+	friend bool64 txtsneq(const wtxt &t, ui64 pos, const wtxt &sub);
+	friend bool64 txtseq(const wtxt &t, ui64 pos, cwstr sub);
+	friend bool64 txtsneq(const wtxt &t, ui64 pos, cwstr sub);
+	
+	friend ui64 txtf(const wtxt &t, ui64 pos, const wtxt &fnd);					// Find in text
+	friend ui64 txtf(const wtxt &t, ui64 pos, cwstr fnd);
+	friend ui64 txtf(const wtxt &t, ui64 pos, wchar_t fnd);
+	friend ui64 txtf(const wtxt &t, ui64 pos, wchar_t cb, wchar_t ce);
+	friend ui64 txtfe(const wtxt &t, ui64 pos, const wtxt &fnd);				// Find in text from end
+	friend ui64 txtfe(const wtxt &t, ui64 pos, cwstr fnd);
+	friend ui64 txtfe(const wtxt &t, ui64 pos, wchar_t fnd);
+	friend ui64 txtfe(const wtxt &t, ui64 pos, wchar_t cb, wchar_t ce);
+	friend ui64 txtfr(const wtxt &t, ui64 p0, ui64 p1, const wtxt &fnd);		// Find text in range from [p0] to [p1] inclusive
+	friend ui64 txtfr(const wtxt &t, ui64 p0, ui64 p1, cwstr fnd);
+	friend ui64 txtfr(const wtxt &t, ui64 p0, ui64 p1, wchar_t fnd);
+	friend ui64 txtfr(const wtxt &t, ui64 p0, ui64 p1, wchar_t cb, wchar_t ce);
+	friend ui64 txtfa(const wtxt &t, ui64 pos, const wtxt &chars);				// Find any character from pattern [chars]
+	friend ui64 txtfa(const wtxt &t, ui64 pos, cwstr chars);
+	friend ui64 txtfci(const wtxt &t, ui64 pos, const wtxt &fnd);				// Case Insensitive find in text (very slow)
+	friend ui64 txtfci(const wtxt &t, ui64 pos, cwstr fnd);						// Pattern must be always lowercase
+	friend ui64 txtfci(const wtxt &t, ui64 pos, wchar_t fnd);
+	
+	friend wtxt & txti(wtxt &t, ui64 pos, const wtxt &ins);						// Insert in text before the [pos]
+	friend wtxt & txti(wtxt &t, ui64 pos, cwstr ins);
+	friend wtxt & txti(wtxt &t, ui64 pos, wchar_t ins);
+	friend wtxt & txto(wtxt &t, ui64 pos, const wtxt &ovr);						// Overwrite in text
+	friend wtxt & txto(wtxt &t, ui64 pos, cwstr ovr);
+	friend wtxt & txto(wtxt &t, ui64 pos, wchar_t ovr);
+	friend wtxt & txtoa(wtxt &t, wchar_t old, wchar_t ovr);						// Overwrite all [old] characters with [ovr] character
+	friend wtxt & txtr(wtxt &t, ui64 pos, ui64 n, const wtxt &rep);				// Replace in text
+	friend wtxt & txtr(wtxt &t, ui64 pos, ui64 n, cwstr rep);
+	friend wtxt & txtr(wtxt &t, ui64 pos, ui64 n, wchar_t rep);
+	friend wtxt & txtrp(wtxt &t, ui64 p0, ui64 p1, const wtxt &rep); 			// Replace in text from [p0] to [p1] inclusive
+	friend wtxt & txtrp(wtxt &t, ui64 p0, ui64 p1, cwstr rep);
+	friend wtxt & txtrp(wtxt &t, ui64 p0, ui64 p1, char rep);
+	friend wtxt & txtd(wtxt &t, ui64 pos, ui64 n);								// Delete part of text
+	friend wtxt & txtdp(wtxt &t, ui64 p0, ui64 p1); 							// Delete text from [p0] to [p1] inclusive
+	friend wtxt & txtdl(wtxt &t); 												// Delete last character of text
+	
+	friend wtxt txts(const wtxt &t, ui64 pos, ui64 n);							// Extract subtext from text
+	friend wtxt txtsp(const wtxt &t, ui64 p0, ui64 p1);							// Extract subtext between positions
+	friend wtxt & txts(wtxt &t, const wtxt &src, ui64 pos, ui64 n);				// Set text [t] with the contents of subtext from [src]
+	friend wtxt & txtsp(wtxt &t, const wtxt &src, ui64 p0, ui64 p1);			// Set text [t] subtext [src] between positions
+	
+	friend wtxt & txtssz(wtxt &t, ui64 sz);										// Set size of text
+	friend wtxt & txtsdt(wtxt &t, ui64 ts, ui64 s, wchar_t *td); 				// Set all internal text variables
+	friend wtxt & txtclr(wtxt &t);												// Clear all text quickly, without destroying it
+	friend wtxt & txtz(wtxt &t);												// Fill entire text buffer with zeroes
+	friend wtxt & txtinv(wtxt &t);												// Release text memory and invalidate it
+	friend wtxt & txtfree(wtxt &t);												// Release text memory only, caller must inv. text
+	friend wtxt & txtadd(wtxt &t, const wchar_t *d, ui64 sz);					// Add [sz] amount of characters from [d] to text
+	friend wtxt & txtszu(wtxt &t);												// Size update
+	friend wtxt & txttrm(wtxt &t);												// Trimm true size of text to match actual data
+	
+	friend ui64 t2i(const wtxt &t);												// Text to integer
+	friend ui64 h2i(const wtxt &t);												// Hex to integer
+	friend bool64 txtnui(const wtxt &t);										// Returns true if text is not an unsigned decimal integer
+	friend bool64 txtnsi(const wtxt &t);										// Returns true if text is not a signed integer
+	friend bool64 txtnhi(const wtxt &t);										// Returns true if text is not a hexadecimal number
+	
+private:
+	static wchar_t * Alloc(ui64 size, ui64 &tsize);
+	
+private:
+	void ExceptBuf(DWORD c, ui64 pos) const;
+	void ExceptNum(DWORD c) const;
+	void ExceptPos(DWORD c, ui64 p0, ui64 p1) const;
+
+private:
+	static HANDLE heap;
+	
+private:
+	ui64 ts;
+	ui64 s;
+	wchar_t *t;
+};
+
+inline wtxt::wtxt()
+{
+	s = 0;
+	ts = 0;
+	t = NULL;
+}
+
+inline wtxt::wtxt(const wtxt &o)
+{
+	s = o.s;
+	if(o.t != NULL)
+	{
+		t = Alloc(s, ts);
+		mcpy(t, o.t, s * sizeof(wchar_t));
+		t[s] = 0;
+	}
+	else
+	{
+		ts = 0;
+		t = NULL;
+	}
+}
+
+inline wtxt::wtxt(wtxt &&o)
+{
+	ts = o.ts;
+	s = o.s;
+	t = o.t;
+	o.ts = 0;
+	o.s = 0;
+	o.t = NULL;
+}
+
+inline wtxt::wtxt(cwstr cs)
+{
+	s = cs.s;
+	t = Alloc(s, ts);
+	mcpy(t, cs.t, (s+1) * sizeof(wchar_t));
+}
+
+inline wtxt::wtxt(char c)
+{
+	s = 1;
+	t = Alloc(1, ts);
+	t[0] = c;
+	t[s] = 0;
+}
+
+inline wtxt::wtxt(wchar_t wc)
+{
+	s = 1;
+	t = Alloc(1, ts);
+	t[0] = wc;
+	t[1] = 0;
+}
+
+inline wtxt::wtxt(ui64 ui)
+{
+	if(ui == 0)
+	{
+		s = 0;
+		ts = 0;
+		t = NULL;
+	}
+	else
+	{
+		s = 0;
+		t = Alloc(ui, ts);
+		t[s] = 0;
+	}
+}
+
+inline wtxt::wtxt(i64 i)
+{
+	if(i <= 0)
+	{
+		s = 0;
+		ts = 0;
+		t = NULL;
+	}
+	else
+	{
+		s = 0;
+		t = Alloc((ui64)i, ts);
+		t[s] = 0;
+	}
+}
+
+inline wtxt::wtxt(i32 i)
+{
+	if(i <= 0)
+	{
+		s = 0;
+		ts = 0;
+		t = NULL;
+	}
+	else
+	{
+		s = 0;
+		t = Alloc((ui64)i, ts);
+		t[s] = 0;
+	}
+}
+
+inline wtxt::~wtxt()	// Setting t to NULL after free - bad idea
+{						// Only in DBG and set to 0xDEADBEEF
+	WTXT_FREE(t); // NULL just gives error
+}
+
+inline wtxt & wtxt::operator=(const wtxt &o)
+{
+	s = o.s;
+	if(ts <= o.s)
+	{
+		WTXT_FREE(t);
+		t = Alloc(o.s, ts);
+	}
+	
+	mcpy(t, o.t, s * sizeof(wchar_t));
+	t[s] = 0;
+	return *this;
+}
+
+inline wtxt & wtxt::operator=(wtxt &&o)
+{
+	if(this != &o)
+	{
+		WTXT_FREE(t);
+		ts = o.ts;
+		s = o.s;
+		t = o.t;
+		o.ts = 0;
+		o.s = 0;
+		o.t = NULL;
+	}
+	
+	return *this;
+}
+
+inline wtxt & wtxt::operator=(cwstr cs)
+{
+	s = cs.s;
+	if(ts <= cs.s)
+	{
+		WTXT_FREE(t);
+		t = Alloc(cs.s, ts);
+	}
+	
+	mcpy(t, cs.t, (s+1) * sizeof(wchar_t));
+	return *this;
+}
+
+inline wtxt & wtxt::operator=(char c)
+{
+	s = 1;
+	t[0] = c;
+	t[s] = 0;
+	return *this;
+}
+
+inline wtxt & wtxt::operator=(wchar_t wc)
+{
+	s = 1;
+	t[0] = wc;
+	t[s] = 0;
+	return *this;
+}
+
+inline wtxt & wtxt::operator=(ui64 ui)
+{
+	if(ts <= ui)
+	{
+		WTXT_FREE(t);
+		t = Alloc(ui, ts);
+	}
+	
+	s = 0;
+	t[s] = 0;
+	return *this;
+}
+
+inline wtxt & wtxt::operator=(i64 i)
+{
+	if((i64)ts <= i)
+	{
+		WTXT_FREE(t);
+		t = Alloc((ui64)i, ts);
+	}
+	
+	s = 0;
+	t[s] = 0;
+	return *this;
+}
+
+inline wtxt & wtxt::operator=(i32 i)
+{
+	if((i32)ts <= i)
+	{
+		WTXT_FREE(t);
+		t = Alloc((ui64)i, ts);
+	}
+	
+	s = 0;
+	t[s] = 0;
+	return *this;
+}
+
+inline wchar_t & wtxt::operator[](ui64 i)
+{
+	return t[i];
+}
+
+inline const wchar_t & wtxt::operator[](ui64 i) const
+{
+	return t[i];
+}
+
+inline wtxt::operator const wchar_t *() const
+{
+	return (const wchar_t *)t;
+}
+
+inline wtxt::operator wchar_t *()
+{
+	return t;
+}
+
+inline ui64 wtxt::operator~() const
+{
+	return s;
+}
+
+inline uli32 * wtxt::operator*()
+{
+	s = ts;
+	return (uli32 *)(&s);
+}
+
+inline ui64 wtxt::operator!() const
+{
+	return ts;
+}
+
+inline wchar_t * wtxt::Alloc(ui64 size, ui64 &tsize)
+{
+	if(heap == NULL)
+	{
+		heap = HeapCreate(HEAP_FLAGS, 0x100000, 0);  // 1 MB, 256 pages, 16x 64k granularity
+	}
+	
+	tsize = size + 1; // +1 to account for \0 char!
+	return (wchar_t *)HeapAlloc(heap, 0, tsize * sizeof(wchar_t));
+}
+
+inline wtxt operator+(wtxt t0, const wtxt &t1)
+{
+	return t0 += t1;
+}
+
+inline wtxt operator+(cwstr cs, const wtxt &t)
+{
+	return wtxt(cs) += t;
+}
+
+inline wtxt operator+(wtxt t, cwstr cs)
+{
+	return t += cs;
+}
+
+inline wtxt operator+(wchar_t c, const wtxt &t)
+{
+	return wtxt(c) += t;
+}
+
+inline wtxt operator+(wtxt t, wchar_t c)
+{
+	return t += c;
+}
+
+inline bool64 operator==(const wtxt &t0, const wtxt &t1)
+{
+	return t0.s == t1.s ? memeq(t0.t, t1.t, t0.s * sizeof(wchar_t)) : false;
+}
+
+inline bool64 operator!=(const wtxt &t0, const wtxt &t1)
+{
+	return t0.s != t1.s ? true : memneq(t0.t, t1.t, t0.s * sizeof(wchar_t));
+}
+
+inline bool64 operator==(const wtxt &t, cwstr cs)
+{
+	return cs.s == t.s ? memeq(t.t, cs.t, cs.s * sizeof(wchar_t)) : false;
+}
+
+inline bool64 operator!=(const wtxt &t, cwstr cs)
+{
+	return cs.s != t.s ? true : memneq(t.t, cs.t, cs.s * sizeof(wchar_t));
+}
+
+inline bool64 operator==(cwstr cs, const wtxt &t)
+{
+	return cs.s == t.s ? memeq(t.t, cs.t, cs.s * sizeof(wchar_t)) : false;
+}
+
+inline bool64 operator!=(cwstr cs, const wtxt &t)
+{
+	return cs.s != t.s ? true : memneq(t.t, cs.t, cs.s * sizeof(wchar_t));
+}
+
+inline bool64 operator==(const wtxt &t, wchar_t c)
+{
+	return t.t[0] == c && t.s == 1;
+}
+
+inline bool64 operator!=(const wtxt &t, wchar_t c)
+{
+	return t.t[0] != c || t.s != 1;
+}
+
+inline bool64 operator==(wchar_t c, const wtxt &t)
+{
+	return t.t[0] == c && t.s == 1;
+}
+
+inline bool64 operator!=(wchar_t c, const wtxt &t)
+{
+	return t.t[0] != c || t.s != 1;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator==(const wtxt &t, void (*empty_func)(void))
+{
+	return t.s == 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator!=(const wtxt &t, void (*empty_func)(void))
+{
+	return t.s != 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator==(void (*empty_func)(void), const wtxt &t)
+{
+	return t.s == 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator!=(void (*empty_func)(void), const wtxt &t)
+{
+	return t.s != 0;
+}
+
+inline bool64 operator<(const wtxt &t0, const wtxt &t1) // +1 to include \0 in comparison
+{
+	return mcmp(t0.t, t1.t, ((t0.s < t1.s ? t0.s : t1.s) + 1) * sizeof(wchar_t)) < 0;
+}
+
+inline bool64 operator>(const wtxt &t0, const wtxt &t1)
+{
+	return mcmp(t0.t, t1.t, ((t0.s < t1.s ? t0.s : t1.s) + 1) * sizeof(wchar_t)) > 0;
+}
+
+inline bool64 txtseq(const wtxt &t, ui64 pos, const wtxt &sub)
+{
+	return sub.s > t.s || pos > t.s - sub.s ? false : memeq(t.t+pos, sub.t, sub.s * sizeof(wchar_t));
+}
+
+inline bool64 txtsneq(const wtxt &t, ui64 pos, const wtxt &sub)
+{
+	return sub.s > t.s || pos > t.s - sub.s ? true : memneq(t.t+pos, sub.t, sub.s * sizeof(wchar_t));
+}
+
+inline bool64 txtseq(const wtxt &t, ui64 pos, cwstr sub)
+{
+	return sub.s > t.s || pos > t.s - sub.s ? false : memeq(t.t+pos, sub.t, sub.s * sizeof(wchar_t));
+}
+
+inline bool64 txtsneq(const wtxt &t, ui64 pos, cwstr sub)
+{
+	return sub.s > t.s || pos > t.s - sub.s ? true : memneq(t.t+pos, sub.t, sub.s * sizeof(wchar_t));
+}
+
+inline wtxt & txto(wtxt &t, ui64 pos, wchar_t ovr)
+{
+	if(pos >= t.s)
+	{
+		t.ExceptBuf(EXCEPTION_TXT_BUFF_OVERRUN, pos);
+		return t;
+	}
+	
+	t.t[pos] = ovr;
+
+	return t;
+}
+
+inline wtxt & txtoa(wtxt &t, wchar_t old, wchar_t ovr)
+{
+	for(ui64 i = 0; i < t.s; ++i)
+	{
+		if(t.t[i] == old)
+		{
+			t.t[i] = ovr;
+		}
+	}
+	
+	return t;
+}
+
+inline wtxt & txtdl(wtxt &t)
+{
+	t.t[t.s-1] = 0;
+	--t.s;
+	return t;
+}
+
+inline wtxt & txtssz(wtxt &t, ui64 sz)
+{
+	if(sz >= t.ts)
+	{
+		sz = t.ts - 1;
+	}
+	
+	t.s = sz;
+	t.t[t.s] = 0;
+	return t;
+}
+
+inline wtxt & txtsdt(wtxt &t, ui64 ts, ui64 s, wchar_t *td)
+{
+	t.ts = ts;
+	t.s = s;
+	t.t = td;
+	return t;
+}
+
+inline wtxt & txtclr(wtxt &t)
+{
+	t.s = 0;
+	t[t.s] = 0;
+	return t;
+}
+
+inline wtxt & txtz(wtxt &t)
+{
+	t.s = 0;
+	memset(t.t, 0, t.ts * sizeof(wchar_t));
+	return t;
+}
+
+inline wtxt & txtinv(wtxt &t)
+{
+	WTXT_FREE(t.t);
+	memset(&t, 0, sizeof(wtxt)); // x3.88 times faster than doing 3 assignment of 0!
+	return t;
+}
+
+inline wtxt & txtfree(wtxt &t)
+{
+	WTXT_FREE(t.t);
+	return t;
+}
+
+inline wtxt & txtadd(wtxt &t, const wchar_t *d, ui64 sz)
+{
+	ui64 ns = t.s + sz;
+	if(t.ts <= ns)
+	{
+		wchar_t *tmp = wtxt::Alloc(ns * TXT_CONCAT_MULT, t.ts);
+		mcpy(tmp, t.t, t.s * sizeof(wchar_t));
+		WTXT_FREE(t.t);
+		t.t = tmp;
+	}
+	
+	mcpy(t.t + t.s, d, sz * sizeof(wchar_t));
+	t.s = ns;
+	t.t[t.s] = 0;
+	return t;
+}
+
+inline wtxt & txtszu(wtxt &t)
+{
+	t.s = strl(t.t);
+	return t;
+}
+
+inline wtxt & txttrm(wtxt &t)
+{
+	wchar_t *tmp = wtxt::Alloc(t.s, t.ts);
+	mcpy(tmp, t.t, t.s);
+	WTXT_FREE(t.t);
+	t.t = tmp;
+	t.t[t.s] = 0;
+	
+	return t;
+}
+
+inline bool64 txtnui(const wtxt &t)
+{
+	for(ui64 i = 0; i < t.s; ++i)
+	{
+		if(t.t[i] < 0x30 || t.t[i] > 0x39)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+inline bool64 txtnsi(const wtxt &t)
+{
+	for(ui64 i = 0; i < t.s; ++i)
+	{
+		if(t.t[i] == 0x2D) // -
+		{
+			continue;
+		}
+		if(t.t[i] < 0x30 || t.t[i] > 0x39)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+inline bool64 txtnhi(const wtxt &t)
+{
+	for(ui64 i = 0; i < t.s; ++i)
+	{
+		if((t[i] & 0xFF00) != 0)
+		{
+			return true;
+		}
+		
+		char n = (char)t[i];
+		if(n > 0x39)
+		{
+			n = ui8((n & 0xDF) - 0x7); // Remove lowercase bit, scale to '9'
+		}
+		
+		if(n < 0x30 || n > 0x3F)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+ui64 t2i(const wtxt &t);
+ui64 h2i(const wtxt &t);
+
+wtxt i2wt(ui64 i);	// Integer to text
+wtxt i2wt(ui32 i); 
+wtxt i2wt(i64 i);  
+wtxt i2wt(i32 i);
+
+wtxt b2wt(ui8 b);	// Byte to text
+wtxt b2wt(i8 b);
+  
+wtxt i2wh(ui64 i);	// Integer to hex text
+wtxt i2wh(ui32 i);
+wtxt i2wh(ui16 i);
+
+wtxt b2wh(ui8 b);	// Byte to hex text
+
+wtxt i2wb(ui64 i);	// Integer to binary text
+wtxt i2wb(ui32 i);
+wtxt i2wb(ui16 i);
+
+wtxt b2wb(ui8 b);	// Byte to binary text
+
+inline wtxt i2wt(uli32 i)
+{
+	return i2wt((ui32)i);
+}
+
+inline wtxt i2wt(li32 i)
+{
+	return i2wt((i32)i);
+}
+
+inline wtxt i2wh(uli32 i)
+{
+	return i2wh((ui32)i);
+}
+
+inline wtxt i2whc(ui64 i)		// Integer to hex compact
+{
+	if(i == 0)
+	{
+		return (wtxt)'0';
+	}
+	
+	wtxt raw = i2wh(i);
+	if(raw[0] != '0')
+	{
+		return raw;
+	}
+	
+	ui64 idx = 0;
+	for(; idx < ~raw; ++idx)
+	{
+		if(raw[idx] != '0')
+		{
+			break;
+		}
+	}
+	
+	txtd(raw, 0, idx);
+	return raw;
+}
+
+wtxt & i2t(ui64 i, wtxt &res);
+wtxt & i2t(ui32 i, wtxt &res);
+wtxt & i2t(i64 i, wtxt &res);
+wtxt & i2t(i32 i, wtxt &res);
+
+wtxt & b2t(ui8 b, wtxt &res);
+wtxt & b2t(i8 b, wtxt &res);
+
+wtxt & i2h(ui64 i, wtxt &res);
+wtxt & i2h(ui32 i, wtxt &res);
+wtxt & i2h(ui16 i, wtxt &res);
+
+wtxt & b2h(ui8 b, wtxt &res);
+
+wtxt & i2b(ui64 i, wtxt &res);
+wtxt & i2b(ui32 i, wtxt &res);
+wtxt & i2b(ui16 i, wtxt &res);
+
+wtxt & b2b(ui8 b, wtxt &res);
+
+inline wtxt & i2t(uli32 i, wtxt &res)
+{
+	return i2t((ui32)i, res);
+}
+
+inline wtxt & i2t(li32 i, wtxt &res)
+{
+	return i2t((i32)i, res);
+}
+
+inline wtxt & i2h(uli32 i, wtxt &res)
+{
+	return i2h((ui32)i, res);
+}
+
+inline wtxt & i2hc(ui64 i, wtxt &res)
+{
+	if(i == 0)
+	{
+		res = '0';
+		return res;
+	}
+	
+	res = i2wh(i);
+	if(res[0] != '0')
+	{
+		return res;
+	}
+	
+	ui64 idx = 0;
+	for(; idx < ~res; ++idx)
+	{
+		if(res[idx] != '0')
+		{
+			break;
+		}
+	}
+	
+	txtd(res, 0, idx);
+	return res;
+}
+
+inline wtxt & t2low(wtxt &t) // Convert entire text to lowercase characters
+{
+	for(ui64 i = 0; i < ~t; ++i)
+	{
+		ui8 ored = (ui8)t[i] | 0x20U; // TODO MAKE UNICODE AWARE FUNC SOMEHOW
+		ored -= 0x61U;		// [a] If [ored] is less than [a], it will overflow into big value
+		if(ored > 0x19U)	// [z - a] = 0x19, if [ored] is more -> it either was < [a] or > [z]
+		{
+			continue;
+		}
+		t[i] = (ui8)t[i] | 0x20U;
+	}
+	return t;
+}
+
+inline wtxt & t2lowfst(wtxt &t) // Fast version. Input must not contain @[\]^_ and 0x0-0x1F
+{
+	mor(t, 0x0020002000200020, ~t);
+	return t;
+}
+
+inline wtxt & t2up(wtxt &t) // Convert entire text to uppercase characters (much slower)
+{
+	for(ui64 i = 0; i < ~t; ++i)
+	{
+		ui8 tmp = (ui8)t[i];
+		tmp -= 0x61U;	// a
+		if(tmp > 0x19U)	// z - a
+		{
+			continue;
+		}
+		t[i] = (ui8)t[i] ^ 0x20U; // Flip the case bit
+	}
+	return t;
+}
+
+inline wchar_t c2low(wchar_t c)
+{
+	ui8 ored = (ui8)c | 0x20U;
+	ored -= 0x61U;
+	if(ored > 0x19U)
+	{
+		return c;
+	}
+	return (ui8)c | 0x20U;
+}
+
+inline wchar_t c2up(wchar_t c)
+{
+	ui8 tmp = (ui8)c;
+	tmp -= 0x61U;
+	if(tmp > 0x19U)
+	{
+		return c;
+	}
+	return (ui8)c ^ 0x20U;
+}

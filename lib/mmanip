@@ -1,0 +1,449 @@
+#pragma once
+
+#include "types.h"
+
+inline bool64 memeq(const void *a, const void *b, ui64 s) // SAME SPEED AS MEMCMP!
+{
+	ui64 w = s >> 3, i = 0; // <=> s/sizeof(ui64) <=> s/8 -> Number of CPU words in mem range
+	const ui64 *x = (const ui64 *)a, *y = (const ui64 *)b;
+	
+	while(i < w)
+	{
+		if(x[i] != y[i])
+		{
+			return false;
+		}
+		
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < s)
+	{
+		if(((const char *)a)[i] != ((const char *)b)[i])
+		{
+			return false;
+		}
+		
+		++i;
+	}
+	
+	return true;
+}
+
+inline bool64 memneq(const void *a, const void *b, ui64 s)
+{
+	ui64 w = s >> 3, i = 0; // <=> s/sizeof(ui64) <=> s/8 -> Number of CPU words in mem range
+	const ui64 *x = (const ui64 *)a, *y = (const ui64 *)b;
+	
+	while(i < w)
+	{
+		if(x[i] != y[i])
+		{
+			return true;
+		}
+		
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < s)
+	{
+		if(((const char *)a)[i] != ((const char *)b)[i])
+		{
+			return true;
+		}
+		
+		++i;
+	}
+	
+	return false;
+}
+
+inline i64 mcmp(const void *a, const void *b, ui64 s)
+{
+	ui64 w = s >> 3, i = 0;
+	const ui64 *x = (const ui64 *)a, *y = (const ui64 *)b;
+	
+	while(i < w)
+	{
+		if(x[i] != y[i])
+		{
+			break;
+		}
+		
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < s)
+	{
+		if(((const char *)a)[i] != ((const char *)b)[i])
+		{
+			return ((ui8 *)a)[i] - ((ui8 *)b)[i];
+		}
+		
+		++i;
+	}
+	
+	return 0;
+}
+
+inline void mcpy(void *d, const void *s, ui64 n) // As fast as memcpy()
+{
+	if(d == s || n == 0)
+	{
+		return;
+	}
+	
+	ui64 w = n >> 3, i = 0;
+	ui64 *x = (ui64 *)d;
+	const ui64 *y = (const ui64 *)s;
+	
+	while(i < w)
+	{
+		x[i] = y[i];
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < n)
+	{
+		((char *)d)[i] = ((const char *)s)[i];
+		++i;
+	}
+}
+
+inline ui64 strl(const char *cs)
+{
+	const char *sbeg = cs--;
+	while(*++cs != 0)
+	{
+		// Do nothing...
+	}
+	
+	return ui64(cs - sbeg);
+}
+
+inline ui64 strl(const wchar_t *cs) // Count the number of characters in a wide c-string
+{
+	const wchar_t *sbeg = cs--;
+	while(*++cs != 0)
+	{
+		// Do nothing...
+	}
+	
+	return ui64(cs - sbeg);
+}
+
+inline void mand(void *m, ui64 v, ui64 s) // Apply bitwise AND to a range of memory (one byte pattern only)
+{ // TODO ALIGN MEMORY. BASED ON TESTS PERFORMANCE GAINS SHOULD BE MINIMAL
+	ui64 w = s >> 3, i = 0;
+	ui64 *x = (ui64 *)m;
+	
+	while(i < w)
+	{
+		x[i] &= v;
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < s)
+	{
+		((char *)m)[i] &= (char)v;
+		++i;
+	}
+}
+
+inline void mor(char *m, ui64 v, ui64 s) // Apply bitwise OR to a range of memory (bytes)
+{ // TODO ALIGN MEMORY
+	ui64 w = s >> 3, i = 0;
+	ui64 *x = (ui64 *)m;
+	
+	while(i < w)
+	{
+		x[i] |= v;
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < s)
+	{
+		m[i] |= (char)v;
+		++i;
+	}
+}
+
+inline void mor(wchar_t *m, ui64 v, ui64 s) // Apply bitwise OR to a range of memory (shorts)
+{ // TODO ALIGN MEMORY
+	ui64 w = s >> 2, i = 0;
+	ui64 *x = (ui64 *)m;
+	
+	while(i < w)
+	{
+		x[i] |= v;
+		++i;
+	}
+	
+	i *= 4; // 4 shorts inside an ui64
+	while(i < s)
+	{
+		m[i] |= (wchar_t)v;
+		++i;
+	}
+}
+
+#ifdef MMANIP_VECTORS
+#include <intrin.h>
+
+static const __m256i zero256 = {0};
+inline void mset256(void *m, ui64 v, ui64 s) // 5 times slower than STD memset
+{
+	if(v != 0)
+	{
+		//handlenonzero
+	}
+	
+	ui64 w = s >> 5, i = w; // <=> s/sizeof(__m256) <=> s/32 -> Number of XMM256 vector registers in mem range
+	__m256i *x = (__m256i *)m;
+	
+	while(i > 0)
+	{
+		_mm256_store_si256(x, zero256);
+		x += 32;
+		--i;
+	}
+	
+	i = w * 32;
+	while(i < s)
+	{
+		((char *)m)[i] = (char)v;
+		++i;
+	}
+}//+msetc ++msetwc for chars
+
+static const __m128i zero128 = {0}; // More dada -> lower vector cmp overhead? Use with very big chunks of memory?
+inline bool64 mcmp128(const void *a, const void *b, ui64 s) // 5KB 85% slower | 1MB 37% slower
+{
+	ui64 v = s >> 4; // <=> s/sizeof(__m128) <=> s/16 -> Number of XMM128 vector registers in mem range
+	const char *x = (const char *)a, *y = (const char *)b;
+	
+	//__m128i bi = _mm_lddqu_si128((__m128i const *)c);
+	//__mmask8 m = _mm_cmp_epi64_mask(bi, bi0, _MM_CMPINT_NE);
+	
+	while(v != 0)
+	{
+		__m128i xv = _mm_lddqu_si128((__m128i const *)x);
+		__m128i yv = _mm_lddqu_si128((__m128i const *)y);
+		__m128i res = _mm_xor_si128(xv, yv);
+		
+		if(!_mm_testc_si128(res, zero128))
+		{
+			return false;
+		}
+		
+		x += 16, y += 16, --v;
+	}
+	
+	const char *e = (const char *)a + s;
+	while(x != e)
+	{
+		if(*x != *y)
+		{
+			return false;
+		}
+		
+		++x, ++y;
+	}
+	
+	return true;
+}
+#endif
+
+#ifdef MMANIP_INFERIOR
+inline void mmov(void *d, const void *s, ui64 n) // 2x slower than memmove(), but correct operation
+{
+	if(d == s || n == 0)
+	{
+		return;
+	}
+	
+	ui64 w = n >> 3, i;
+	ui64 *to = (ui64 *)d;
+	const ui64 *from = (const ui64 *)s;
+	
+	if(to > from && (ui64)(to-from) < n) //	[from-------]
+	{ //									       [to---------]
+		i = n - 1;
+		ui64 imin = w * sizeof(ui64);
+		while(i >= imin)
+		{
+			((char *)d)[i] = ((const char *)s)[i];
+			--i;
+		}
+	
+		i = w - 1;
+		while(i != UI64_MAX)
+		{
+			to[i] = from[i];
+			--i;
+		}
+		
+		return;
+	}
+	
+	if(from > to && (ui64)(from-to) < n) // 		[from-------]
+	{ //								     [to---------]
+		i = 0;
+		while(i < w)
+		{
+			to[i] = from[i];
+			++i;
+		}
+		
+		i *= sizeof(ui64);
+		while(i < n)
+		{
+			((char *)d)[i] = ((const char *)s)[i];
+			++i;
+		}
+		
+		return;
+	}
+	
+	mcpy(d, s, n);
+}
+
+inline void mset(void *m, ui64 v, ui64 s) // 5 times slower than STD memset
+{
+	ui64 w = s >> 3, i = 0;
+	ui64 *x = (ui64 *)m;
+	
+	while(i < w)
+	{
+		x[i] = v;
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < s)
+	{
+		((char *)m)[i] = (char)v;
+		++i;
+	}
+}
+
+inline void msetc(void *m, char v, ui64 s) // 5 times slower than STD memset
+{
+	ui64 vw = v; // Value Word
+	vw = vw << 8 | v;
+	vw = vw << 8 | v;
+	vw = vw << 8 | v;
+	vw = vw << 8 | v;
+	vw = vw << 8 | v;
+	vw = vw << 8 | v;
+	vw = vw << 8 | v;
+	ui64 w = s >> 3, i = 0;
+	ui64 *x = (ui64 *)m;
+	
+	while(i < w)
+	{
+		x[i] = vw;
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < s)
+	{
+		((char *)m)[i] = v;
+		++i;
+	}
+}
+
+inline void msetwc(void *m, wchar_t v, ui64 s) // 5 times slower than STD memset
+{
+	ui64 vw = v; // Value Word
+	vw = vw << 16 | v;
+	vw = vw << 16 | v;
+	vw = vw << 16 | v;
+	ui64 w = s >> 3, i = 0;
+	ui64 *x = (ui64 *)m;
+	
+	while(i < w)
+	{
+		x[i] = vw;
+		++i;
+	}
+	
+	i *= sizeof(ui64);
+	while(i < s)
+	{
+		((wchar_t *)m)[i] = v;
+		++i;
+	}
+}
+#endif
+
+#ifdef MMANIP_BRUTE
+inline bool64 smcmp(const void *a, const void *b, ui64 s) // The most primitive Brute Force!
+{
+	const char *sa = (const char *)a - 1, *sb = (const char *)b - 1, *e = (const char *)a + s;
+	while(++sa != e)
+	{
+		if(*sa != *++sb)
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+#endif
+
+//inline bool64 memeqal(const void *a, const void *b, ui64 s) // Optimised version for aligned access
+//{
+//	ui64 w = s >> 3, i = 0; // <=> s/sizeof(ui64) <=> s/8 -> Number of CPU words in mem range
+//	
+//	if(w > 0)
+//	{
+//		ui64 malig = (ui64)a % 8; // Align on ly a, as b almost always aligned in string checking
+//		
+//		while(i < malig) // Align memory by checking unaligned bytes first
+//		{
+//			if(((const char *)a)[i] != ((const char *)b)[i])
+//			{
+//				return false;
+//			}
+//			
+//			++i;
+//		}
+//		
+//		//(const char *)a += malig, s -= malig;
+//		
+//		const ui64 *x = (const ui64 *)a, *y = (const ui64 *)b;
+//		
+//		i = 0;
+//		while(i < w)
+//		{
+//			if(x[i] != y[i]) // Unsolvable problem: if a will be made aligned, then be will become unaligned
+//			{
+//				return false;
+//			}
+//			
+//			++i;
+//		}
+//	}
+//	
+//	i *= sizeof(ui64);
+//	while(i < s)
+//	{
+//		if(((const char *)a)[i] != ((const char *)b)[i])
+//		{
+//			return false;
+//		}
+//		
+//		++i;
+//	}
+//	
+//	return true;
+//}

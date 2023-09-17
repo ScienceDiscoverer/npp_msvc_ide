@@ -1,0 +1,898 @@
+#pragma once
+
+#include <mmanip>
+
+#include "types.h"
+
+// TODO CASE INSENSITIVE FIND. WILL NEED MMANIP CASE INSENSE MCMP. TOLOW ANALOGY
+// TODO FIND ANY CHARACTER THAT IS NOT CHAR
+// TODO FIND CHAR OR OTHER CHAR OR OTHER CHAR ... ANY OF CHAR IN STRING
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#ifdef DEBUG
+	#pragma comment( lib, "txtd" )
+#else
+	#pragma comment( lib, "txt" )
+#endif
+
+#ifndef HEAP_MULTI_THREAD_MODE				// Can only use in 3 cases:
+	#define HEAP_FLAGS HEAP_NO_SERIALIZE	// Proc. with only one thread
+#else										// Proc. mult. threads but only 1 uses this heap
+	#define HEAP_FLAGS 0					// Proc. mult. threads with custom mutual exclusion
+#endif
+
+#define TXT_UTF8
+
+#define TEND 0xFFFFFFFFFFFFFFFF		// Text MAX end position
+
+#define TXT_CONCAT_MULT 2
+
+#define EXCEPTION_TXT_BUFF_OVERRUN	0xE0000000
+#define EXCEPTION_T2I_NON_NUMBER	0xE0000001
+#define EXCEPTION_H2I_NON_NUMBER	0xE0000002
+#define EXCEPTION_T2I_OVERFLOW		0xE0000003
+#define EXCEPTION_H2I_OVERFLOW		0xE0000004
+#define EXCEPTION_TXTSP_P1_LESS_P0	0xE0000005
+#define EXCEPTION_TXTRP_P1_LESS_P0	0xE0000006
+#define EXCEPTION_TXTDP_P1_LESS_P0	0xE0000007
+
+#define EXCEPT_TXT_UTF8  0
+#define EXCEPT_TXT_UTF16 1
+
+#define L(x) cstr({ x, (sizeof(x)-1) })
+
+#define TXT_ALLOC(x) (char *)HeapAlloc(txt::heap, 0, (x))
+#define TXT_FREE(x) HeapFree(txt::heap, 0, (x))
+
+struct cstr
+{
+	const char *t;
+	ui64 s;
+};
+
+class txt
+{
+public:
+	txt();
+	txt(const txt &o);
+	txt(txt &&o);
+	txt(cstr cs);
+	explicit txt(char c);
+	txt(ui64 ui);
+	txt(i64 i);
+	txt(i32 i);
+	
+	~txt();
+	
+	txt & operator=(const txt &o);
+	txt & operator=(txt &&o);
+	txt & operator=(cstr cs);
+	txt & operator=(char c);
+	txt & operator=(ui64 ui);
+	txt & operator=(i64 i);
+	txt & operator=(i32 i);
+	
+	char & operator[](ui64 i);
+	const char & operator[](ui64 i) const;
+	
+	txt & operator+=(const txt &o);
+	txt & operator+=(cstr cs);
+	txt & operator+=(char c);
+	
+	operator const char *() const;
+	operator char *();
+	
+	ui64 operator~() const;	// Size operator
+	uli32 * operator*();	// Size modification operator
+	ui64 operator!() const;	// True Size Operator
+	
+	friend bool64 operator==(const txt &t0, const txt &t1);
+	friend bool64 operator!=(const txt &t0, const txt &t1);
+	friend bool64 operator==(const txt &t, cstr cs);
+	friend bool64 operator!=(const txt &t, cstr cs);
+	friend bool64 operator==(cstr cs, const txt &t);
+	friend bool64 operator!=(cstr cs, const txt &t);
+	friend bool64 operator==(const txt &t, char c);
+	friend bool64 operator!=(const txt &t, char c);
+	friend bool64 operator==(char c, const txt &t);
+	friend bool64 operator!=(char c, const txt &t);
+	friend bool64 operator==(const txt &t, void (*empty_func)(void));
+	friend bool64 operator!=(const txt &t, void (*empty_func)(void));
+	friend bool64 operator==(void (*empty_func)(void), const txt &t);
+	friend bool64 operator!=(void (*empty_func)(void), const txt &t);
+	friend bool64 operator<(const txt &t0, const txt &t1);
+	friend bool64 operator>(const txt &t0, const txt &t1);
+	friend bool64 txtseq(const txt &t, ui64 pos, const txt &sub);			// Test if subtext at [pos] matches [sub]
+	friend bool64 txtsneq(const txt &t, ui64 pos, const txt &sub);
+	friend bool64 txtseq(const txt &t, ui64 pos, cstr sub);
+	friend bool64 txtsneq(const txt &t, ui64 pos, cstr sub);
+	
+	friend ui64 txtf(const txt &t, ui64 pos, const txt &fnd); 				// Find in text
+	friend ui64 txtf(const txt &t, ui64 pos, cstr fnd);
+	friend ui64 txtf(const txt &t, ui64 pos, char fnd);
+	friend ui64 txtf(const txt &t, ui64 pos, char cb, char ce);
+	friend ui64 txtfe(const txt &t, ui64 pos, const txt &fnd); 				// Find in text from end
+	friend ui64 txtfe(const txt &t, ui64 pos, cstr fnd);
+	friend ui64 txtfe(const txt &t, ui64 pos, char fnd);
+	friend ui64 txtfe(const txt &t, ui64 pos, char cb, char ce);
+	friend ui64 txtfr(const txt &t, ui64 p0, ui64 p1, const txt &fnd);		// Find text in range from [p0] to [p1] inclusive
+	friend ui64 txtfr(const txt &t, ui64 p0, ui64 p1, cstr fnd);
+	friend ui64 txtfr(const txt &t, ui64 p0, ui64 p1, char fnd);
+	friend ui64 txtfr(const txt &t, ui64 p0, ui64 p1, char cb, char ce);
+	friend ui64 txtfa(const txt &t, ui64 pos, const txt &chars);			// Find any character from pattern [chars]
+	friend ui64 txtfa(const txt &t, ui64 pos, cstr chars);
+	friend ui64 txtfci(const txt &t, ui64 pos, const txt &fnd);				// Case Insensitive find in text (very slow)
+	friend ui64 txtfci(const txt &t, ui64 pos, cstr fnd);					// Pattern must be always lowercase
+	friend ui64 txtfci(const txt &t, ui64 pos, char fnd);
+	
+	friend txt & txti(txt &t, ui64 pos, const txt &ins);					// Insert in text before the [pos]
+	friend txt & txti(txt &t, ui64 pos, cstr ins);
+	friend txt & txti(txt &t, ui64 pos, char ins);
+	friend txt & txto(txt &t, ui64 pos, const txt &ovr); 					// Overwrite in text
+	friend txt & txto(txt &t, ui64 pos, cstr ovr);
+	friend txt & txto(txt &t, ui64 pos, char ovr);
+	friend txt & txtoa(txt &t, char old, char ovr);							// Overwrite all [old] characters with [ovr] character
+	friend txt & txtr(txt &t, ui64 pos, ui64 n, const txt &rep); 			// Replace in text
+	friend txt & txtr(txt &t, ui64 pos, ui64 n, cstr rep);
+	friend txt & txtr(txt &t, ui64 pos, ui64 n, char rep);
+	friend txt & txtrp(txt &t, ui64 p0, ui64 p1, const txt &rep); 			// Replace in text from [p0] to [p1] inclusive
+	friend txt & txtrp(txt &t, ui64 p0, ui64 p1, cstr rep);
+	friend txt & txtrp(txt &t, ui64 p0, ui64 p1, char rep);
+	friend txt & txtd(txt &t, ui64 pos, ui64 n); 							// Delete part of text
+	friend txt & txtdp(txt &t, ui64 p0, ui64 p1); 							// Delete text from [p0] to [p1] inclusive
+	friend txt & txtdl(txt &t); 											// Delete last character of text
+	
+	friend txt txts(const txt &t, ui64 pos, ui64 n); 						// Extract subtext from text
+	friend txt txtsp(const txt &t, ui64 p0, ui64 p1); 						// Extract subtext between positions
+	friend txt & txts(txt &t, const txt &src, ui64 pos, ui64 n);			// Set text [t] with the contents of subtext from [src]
+	friend txt & txtsp(txt &t, const txt &src, ui64 p0, ui64 p1);			// Set text [t] subtext [src] between positions
+	
+	friend txt & txtssz(txt &t, ui64 sz); 									// Set size of text
+	friend txt & txtsdt(txt &t, ui64 ts, ui64 s, char *td); 				// Set all internal text variables
+	friend txt & txtclr(txt &t);											// Clear all text quickly, without destroying it
+	friend txt & txtz(txt &t);												// Fill entire text buffer with zeroes
+	friend txt & txtinv(txt &t);											// Release text memory and invalidate it
+	friend txt & txtfree(txt &t);											// Release text memory only, caller must inv. text
+	friend txt & txtadd(txt &t, const char *d, ui64 sz);					// Add [sz] amount of characters from [d] to text
+	friend txt & txtszu(txt &t);											// Size update
+	friend txt & txttrm(txt &t);											// Trimm true size of text to match actual data
+	
+	friend ui64 t2i(const txt &t); 											// Text to integer
+	friend ui64 h2i(const txt &t); 											// Hex to integer
+	friend bool64 txtnui(const txt &t);										// Returns true if text is not an unsigned decimal integer
+	friend bool64 txtnsi(const txt &t);										// Returns true if text is not a signed integer
+	friend bool64 txtnhi(const txt &t);										// Returns true if text is not a hexadecimal number
+
+private:
+	static char * Alloc(ui64 size, ui64 &tsize);
+
+private:
+	void ExceptBuf(DWORD c, ui64 pos) const;
+	void ExceptNum(DWORD c) const;
+	void ExceptPos(DWORD c, ui64 p0, ui64 p1) const;
+	
+private:
+	static HANDLE heap;
+	
+//private:
+public:
+	ui64 ts;
+	ui64 s;
+	char *t;
+};
+
+inline txt::txt()
+{
+	s = 0;
+	ts = 0;
+	t = NULL;
+}
+
+inline txt::txt(const txt &o)
+{
+	s = o.s;
+	if(o.t != NULL)
+	{
+		t = Alloc(s, ts);
+		mcpy(t, o.t, s);
+		t[s] = 0;
+	}
+	else
+	{
+		ts = 0;
+		t = NULL;
+	}
+}
+
+inline txt::txt(txt &&o)
+{
+	ts = o.ts;
+	s = o.s;
+	t = o.t;
+	o.ts = 0;
+	o.s = 0;
+	o.t = NULL;
+}
+
+inline txt::txt(cstr cs)
+{
+	s = cs.s;
+	t = Alloc(s, ts);
+	mcpy(t, cs.t, s+1);
+}
+
+inline txt::txt(char c) // x5.02 VS STD
+{
+	s = 1;
+	t = Alloc(1, ts);
+	t[0] = c;
+	t[s] = 0;
+}
+
+inline txt::txt(ui64 ui)
+{
+	if(ui == 0)
+	{
+		s = 0;
+		ts = 0;
+		t = NULL;
+	}
+	else
+	{
+		s = 0;
+		t = Alloc(ui, ts);
+		t[s] = 0;
+	}
+}
+
+inline txt::txt(i64 i)
+{
+	if(i <= 0)
+	{
+		s = 0;
+		ts = 0;
+		t = NULL;
+	}
+	else
+	{
+		s = 0;
+		t = Alloc((ui64)i, ts);
+		t[s] = 0;
+	}
+}
+
+inline txt::txt(i32 i)
+{
+	if(i <= 0)
+	{
+		s = 0;
+		ts = 0;
+		t = NULL;
+	}
+	else
+	{
+		s = 0;
+		t = Alloc((ui64)i, ts);
+		t[s] = 0;
+	}
+}
+
+inline txt::~txt()	// Setting t to NULL after free - bad idea
+{					// Only in DBG and set to 0xDEADBEEF
+	TXT_FREE(t);		// NULL just gives error
+}
+
+inline txt & txt::operator=(const txt &o)
+{
+	s = o.s;
+	if(ts <= o.s)
+	{
+		TXT_FREE(t);
+		t = Alloc(o.s, ts);
+	}
+	
+	mcpy(t, o.t, s);
+	t[s] = 0;
+	
+	return *this;
+}
+
+inline txt & txt::operator=(txt &&o)
+{
+	if(this != &o)
+	{
+		TXT_FREE(t);
+		ts = o.ts;
+		s = o.s;
+		t = o.t;
+		o.ts = 0;
+		o.s = 0;
+		o.t = NULL;
+	}
+	
+	return *this;
+}
+
+inline txt & txt::operator=(cstr cs)
+{
+	s = cs.s;
+	if(ts <= cs.s)
+	{
+		TXT_FREE(t);
+		t = Alloc(cs.s, ts);
+	}
+	
+	mcpy(t, cs.t, s+1);
+	return *this;
+}
+
+inline txt & txt::operator=(char c)
+{
+	s = 1;
+	t[0] = c;
+	t[s] = 0;
+	return *this;
+}
+
+inline txt & txt::operator=(ui64 ui)
+{
+	if(ts <= ui)
+	{
+		TXT_FREE(t);
+		t = Alloc(ui, ts);
+	}
+	
+	s = 0;
+	t[s] = 0;
+	return *this;
+}
+
+inline txt & txt::operator=(i64 i)
+{
+	if((i64)ts <= i)
+	{
+		TXT_FREE(t);
+		t = Alloc((ui64)i, ts);
+	}
+	
+	s = 0;
+	t[s] = 0;
+	return *this;
+}
+
+inline txt & txt::operator=(i32 i)
+{
+	if((i32)ts <= i)
+	{
+		TXT_FREE(t);
+		t = Alloc((ui64)i, ts);
+	}
+	
+	s = 0;
+	t[s] = 0;
+	return *this;
+}
+
+inline char & txt::operator[](ui64 i)
+{
+	return t[i];
+}
+
+inline const char & txt::operator[](ui64 i) const
+{
+	return t[i];
+}
+
+inline txt::operator const char *() const
+{
+	return (const char *)t;
+}
+
+inline txt::operator char *()
+{
+	return t;
+}
+
+inline ui64 txt::operator~() const
+{
+	return s;
+}
+
+inline uli32 * txt::operator*()
+{
+	s = ts;
+	return (uli32 *)(&s);
+}
+
+inline ui64 txt::operator!() const
+{
+	return ts;
+}
+
+inline char * txt::Alloc(ui64 size, ui64 &tsize)
+{
+	if(heap == NULL)
+	{
+		heap = HeapCreate(HEAP_FLAGS, 0x100000, 0); // 1 MB, 256 pages, 16x 64k granularity
+	}
+	
+	tsize = size + 1; // +1 to account for \0 char!
+	return (char *)HeapAlloc(heap, 0, tsize);
+}
+
+inline txt operator+(txt t0, const txt &t1)
+{
+	return t0 += t1;
+}
+
+inline txt operator+(cstr cs, const txt &t)
+{
+	return txt(cs) += t;
+}
+
+inline txt operator+(txt t, cstr cs)
+{
+	return t += cs;
+}
+
+inline txt operator+(char c, const txt &t)
+{
+	return txt(c) += t;
+}
+
+inline txt operator+(txt t, char c)
+{
+	return t += c;
+}
+
+inline bool64 operator==(const txt &t0, const txt &t1)
+{
+	return t0.s == t1.s ? memeq(t0.t, t1.t, t0.s) : false;
+}
+
+inline bool64 operator!=(const txt &t0, const txt &t1)
+{
+	return t0.s != t1.s ? true : memneq(t0.t, t1.t, t0.s);
+}
+
+inline bool64 operator==(const txt &t, cstr cs)
+{
+	return cs.s == t.s ? memeq(t.t, cs.t, cs.s) : false;
+}
+
+inline bool64 operator!=(const txt &t, cstr cs)
+{
+	return cs.s != t.s ? true : memneq(t.t, cs.t, cs.s);
+}
+
+inline bool64 operator==(cstr cs, const txt &t)
+{
+	return cs.s == t.s ? memeq(t.t, cs.t, cs.s) : false;
+}
+
+inline bool64 operator!=(cstr cs, const txt &t)
+{
+	return cs.s != t.s ? true : memneq(t.t, cs.t, cs.s);
+}
+
+inline bool64 operator==(const txt &t, char c)
+{
+	return t.t[0] == c && t.s == 1;
+}
+
+inline bool64 operator!=(const txt &t, char c)
+{
+	return t.t[0] != c || t.s != 1;
+}
+
+inline bool64 operator==(char c, const txt &t)
+{
+	return t.t[0] == c && t.s == 1;
+}
+
+inline bool64 operator!=(char c, const txt &t)
+{
+	return t.t[0] != c || t.s != 1;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator==(const txt &t, void (*empty_func)(void))
+{
+	return t.s == 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator!=(const txt &t, void (*empty_func)(void))
+{
+	return t.s != 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator==(void (*empty_func)(void), const txt &t)
+{
+	return t.s == 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator!=(void (*empty_func)(void), const txt &t)
+{
+	return t.s != 0;
+}
+
+inline bool64 operator<(const txt &t0, const txt &t1)
+{
+	return mcmp(t0.t, t1.t, (t0.s < t1.s ? t0.s : t1.s) + 1) < 0; // +1 to include \0 in comparison
+}
+
+inline bool64 operator>(const txt &t0, const txt &t1)
+{
+	return mcmp(t0.t, t1.t, (t0.s < t1.s ? t0.s : t1.s) + 1) > 0;
+}
+
+inline bool64 txtseq(const txt &t, ui64 pos, const txt &sub)
+{
+	return sub.s > t.s || pos > t.s - sub.s ? false : memeq(t.t+pos, sub.t, sub.s);
+}
+
+inline bool64 txtsneq(const txt &t, ui64 pos, const txt &sub)
+{
+	return sub.s > t.s || pos > t.s - sub.s ? true : memneq(t.t+pos, sub.t, sub.s);
+}
+
+inline bool64 txtseq(const txt &t, ui64 pos, cstr sub)
+{
+	return sub.s > t.s || pos > t.s - sub.s ? false : memeq(t.t+pos, sub.t, sub.s);
+}
+
+inline bool64 txtsneq(const txt &t, ui64 pos, cstr sub)
+{
+	return sub.s > t.s || pos > t.s - sub.s ? true : memneq(t.t+pos, sub.t, sub.s);
+}
+
+inline txt & txto(txt &t, ui64 pos, char ovr)
+{
+	if(pos >= t.s)
+	{
+		t.ExceptBuf(EXCEPTION_TXT_BUFF_OVERRUN, pos);
+		return t;
+	}
+	
+	t.t[pos] = ovr;
+	return t;
+}
+
+inline txt & txtoa(txt &t, char old, char ovr)
+{
+	for(ui64 i = 0; i < t.s; ++i)
+	{
+		if(t.t[i] == old)
+		{
+			t.t[i] = ovr;
+		}
+	}
+	
+	return t;
+}
+
+inline txt & txtdl(txt &t)
+{
+	t.t[t.s-1] = 0;
+	--t.s;
+	return t;
+}
+
+inline txt & txtssz(txt &t, ui64 sz)
+{
+	if(sz >= t.ts)
+	{
+		sz = t.ts - 1;
+	}
+	
+	t.s = sz;
+	t.t[t.s] = 0;
+	return t;
+}
+
+inline txt & txtsdt(txt &t, ui64 ts, ui64 s, char *td)
+{
+	t.ts = ts;
+	t.s = s;
+	t.t = td;
+	return t;
+}
+
+inline txt & txtclr(txt &t)
+{
+	t.s = 0;
+	t[t.s] = 0;
+	return t;
+}
+
+inline txt & txtz(txt &t)
+{
+	t.s = 0;
+	memset(t.t, 0, t.ts);
+	return t;
+}
+
+inline txt & txtinv(txt &t)
+{
+	TXT_FREE(t.t);
+	memset(&t, 0, sizeof(txt)); // x3.88 times faster than doing 3 assignment of 0!
+	return t;
+}
+
+inline txt & txtfree(txt &t)
+{
+	TXT_FREE(t.t);
+	return t;
+}
+
+inline txt & txtadd(txt &t, const char *d, ui64 sz)
+{
+	ui64 ns = t.s + sz;
+	if(t.ts <= ns)
+	{
+		char *tmp = txt::Alloc(ns * TXT_CONCAT_MULT, t.ts);
+		mcpy(tmp, t.t, t.s);
+		TXT_FREE(t.t);
+		t.t = tmp;
+	}
+	
+	mcpy(t.t + t.s, d, sz);
+	t.s = ns;
+	t.t[t.s] = 0;
+	return t;
+}
+
+inline txt & txtszu(txt &t)
+{
+	t.s = strl(t.t);
+	return t;
+}
+
+inline txt & txttrm(txt &t)
+{
+	char *tmp = txt::Alloc(t.s, t.ts);
+	mcpy(tmp, t.t, t.s);
+	TXT_FREE(t.t);
+	t.t = tmp;
+	t.t[t.s] = 0;
+	
+	return t;
+}
+
+inline bool64 txtnui(const txt &t)
+{
+	for(ui64 i = 0; i < t.s; ++i)
+	{
+		if(t.t[i] < 0x30 || t.t[i] > 0x39)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+inline bool64 txtnsi(const txt &t)
+{
+	for(ui64 i = 0; i < t.s; ++i)
+	{
+		if(t.t[i] == 0x2D) // -
+		{
+			continue;
+		}
+		if(t.t[i] < 0x30 || t.t[i] > 0x39)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+inline bool64 txtnhi(const txt &t)
+{
+	for(ui64 i = 0; i < t.s; ++i)
+	{
+		char n = t[i];
+		if(n > 0x39)
+		{
+			n = ui8((n & 0xDF) - 0x7); // Remove lowercase bit, scale to '9'
+		}
+		
+		if(n < 0x30 || n > 0x3F)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+ui64 t2i(const txt &t);
+ui64 h2i(const txt &t);
+
+txt i2t(ui64 i);	// Integer to text
+txt i2t(ui32 i);
+txt i2t(i64 i);
+txt i2t(i32 i);
+
+txt b2t(ui8 b);		// Byte to text
+txt b2t(i8 b);
+
+txt i2h(ui64 i);	// Integer to hex text
+txt i2h(ui32 i);
+txt i2h(ui16 i);
+
+txt b2h(ui8 b);		// Byte to hex text
+
+txt i2b(ui64 i);	// Integer to binary text
+txt i2b(ui32 i);
+txt i2b(ui16 i);
+
+txt b2b(ui8 b);		// Byte to binary text
+
+inline txt i2t(uli32 i)
+{
+	return i2t((ui32)i);
+}
+
+inline txt i2t(li32 i)
+{
+	return i2t((i32)i);
+}
+
+inline txt i2h(uli32 i)
+{
+	return i2h((ui32)i);
+}
+
+inline txt i2hc(ui64 i)		// Integer to hex compact
+{
+	if(i == 0)
+	{
+		return (txt)'0';
+	}
+	
+	txt raw = i2h(i);
+	if(raw[0] != '0')
+	{
+		return raw;
+	}
+	
+	ui64 idx = 0;
+	for(; idx < ~raw; ++idx)
+	{
+		if(raw[idx] != '0')
+		{
+			break;
+		}
+	}
+	
+	txtd(raw, 0, idx);
+	return raw;
+}
+
+txt & i2t(ui64 i, txt &res);
+txt & i2t(ui32 i, txt &res);
+txt & i2t(i64 i, txt &res);
+txt & i2t(i32 i, txt &res);
+
+txt & b2t(ui8 b, txt &res);
+txt & b2t(i8 b, txt &res);
+
+txt & i2h(ui64 i, txt &res);
+txt & i2h(ui32 i, txt &res);
+txt & i2h(ui16 i, txt &res);
+
+txt & b2h(ui8 b, txt &res);
+
+txt & i2b(ui64 i, txt &res);
+txt & i2b(ui32 i, txt &res);
+txt & i2b(ui16 i, txt &res);
+
+txt & b2b(ui8 b, txt &res);
+
+inline txt & i2t(uli32 i, txt &res)
+{
+	return i2t((ui32)i, res);
+}
+
+inline txt & i2t(li32 i, txt &res)
+{
+	return i2t((i32)i, res);
+}
+
+inline txt & i2h(uli32 i, txt &res)
+{
+	return i2h((ui32)i, res);
+}
+
+inline txt & i2hc(ui64 i, txt &res)
+{
+	if(i == 0)
+	{
+		res = '0';
+		return res;
+	}
+	
+	res = i2h(i);
+	if(res[0] != '0')
+	{
+		return res;
+	}
+	
+	ui64 idx = 0;
+	for(; idx < ~res; ++idx)
+	{
+		if(res[idx] != '0')
+		{
+			break;
+		}
+	}
+	
+	txtd(res, 0, idx);
+	return res;
+}
+
+inline txt & t2low(txt &t) // Convert entire text to lowercase characters
+{
+	for(ui64 i = 0; i < ~t; ++i)
+	{
+		ui8 ored = t[i] | 0x20U;
+		ored -= 0x61U;		// [a] If [ored] is less than [a], it will overflow into big value
+		if(ored > 0x19U)	// [z - a] = 0x19, if [ored] is more -> it either was < [a] or > [z]
+		{
+			continue;
+		}
+		t[i] |= 0x20U;
+	}
+	return t;
+}
+
+inline txt & t2lowfst(txt &t) // Fast version. Input must not contain @[\]^_ and 0x0-0x1F
+{
+	mor(t, 0x2020202020202020, ~t);
+	return t;
+}
+
+inline txt & t2up(txt &t) // Convert entire text to uppercase characters
+{
+	for(ui64 i = 0; i < ~t; ++i)
+	{
+		ui8 tmp = t[i];
+		tmp -= 0x61U;	// a
+		if(tmp > 0x19U)	// z - a
+		{
+			continue;
+		}
+		t[i] ^= 0x20U; // Flip the case bit
+	}
+	return t;
+}
+
+inline char c2low(char c)
+{
+	ui8 ored = c | 0x20U;
+	ored -= 0x61U;
+	if(ored > 0x19U)
+	{
+		return c;
+	}
+	return c | 0x20U;
+}
+
+inline char c2up(char c)
+{
+	ui8 tmp = c;
+	tmp -= 0x61U;
+	if(tmp > 0x19U)
+	{
+		return c;
+	}
+	return c ^ 0x20U;
+}

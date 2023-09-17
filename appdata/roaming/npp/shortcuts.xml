@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<NotepadPlus>
+    <InternalCommands>
+        <Shortcut id="41010" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="42021" Ctrl="yes" Alt="no" Shift="yes" Key="79" />
+        <Shortcut id="42022" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="41014" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="43013" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="43001" Ctrl="yes" Alt="no" Shift="yes" Key="70" />
+        <Shortcut id="43011" Ctrl="yes" Alt="no" Shift="no" Key="70" />
+        <Shortcut id="43003" Ctrl="yes" Alt="no" Shift="no" Key="82" />
+        <Shortcut id="43054" Ctrl="yes" Alt="no" Shift="no" Key="69" />
+        <Shortcut id="43010" Ctrl="no" Alt="no" Shift="no" Key="115" />
+        <Shortcut id="43046" Ctrl="no" Alt="no" Shift="yes" Key="114" />
+    </InternalCommands>
+    <Macros>
+        <Macro name="REGEX_MARK_ESCAPED_CH" Ctrl="no" Alt="no" Shift="no" Key="0">
+            <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
+            <Action type="3" message="1601" wParam="0" lParam="0" sParam="\\." />
+            <Action type="3" message="1625" wParam="0" lParam="2" sParam="" />
+            <Action type="3" message="1702" wParam="0" lParam="772" sParam="" />
+            <Action type="3" message="1701" wParam="0" lParam="1615" sParam="" />
+        </Macro>
+        <Macro name="FUNCS_TO_DECLS" Ctrl="no" Alt="no" Shift="no" Key="0">
+            <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
+            <Action type="3" message="1601" wParam="0" lParam="0" sParam="(^[a-zA-Z]+.*$)" />
+            <Action type="3" message="1625" wParam="0" lParam="2" sParam="" />
+            <Action type="3" message="1602" wParam="0" lParam="0" sParam="\1;" />
+            <Action type="3" message="1702" wParam="0" lParam="896" sParam="" />
+            <Action type="3" message="1701" wParam="0" lParam="1609" sParam="" />
+            <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
+            <Action type="3" message="1601" wParam="0" lParam="0" sParam="^[a-zA-Z]+.*$" />
+            <Action type="3" message="1625" wParam="0" lParam="2" sParam="" />
+            <Action type="3" message="1702" wParam="0" lParam="900" sParam="" />
+            <Action type="3" message="1701" wParam="0" lParam="1615" sParam="" />
+            <Action type="2" message="0" wParam="43061" lParam="0" sParam="" />
+            <Action type="0" message="2179" wParam="0" lParam="0" sParam="" />
+        </Macro>
+        <Macro name="FUNCS_TO_DEFINS" Ctrl="no" Alt="no" Shift="no" Key="0">
+            <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
+            <Action type="3" message="1601" wParam="0" lParam="0" sParam=";$" />
+            <Action type="3" message="1625" wParam="0" lParam="2" sParam="" />
+            <Action type="3" message="1602" wParam="0" lParam="0" sParam="\r\n{\r\n\t\r\n}\r\n" />
+            <Action type="3" message="1702" wParam="0" lParam="896" sParam="" />
+            <Action type="3" message="1701" wParam="0" lParam="1609" sParam="" />
+        </Macro>
+        <Macro name="PATH_TO_STR_LIT" Ctrl="no" Alt="no" Shift="no" Key="0">
+            <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
+            <Action type="3" message="1601" wParam="0" lParam="0" sParam="(.*)" />
+            <Action type="3" message="1625" wParam="0" lParam="2" sParam="" />
+            <Action type="3" message="1602" wParam="0" lParam="0" sParam='&quot;\1&quot;' />
+            <Action type="3" message="1702" wParam="0" lParam="898" sParam="" />
+            <Action type="3" message="1701" wParam="0" lParam="1609" sParam="" />
+            <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
+            <Action type="3" message="1601" wParam="0" lParam="0" sParam="\\" />
+            <Action type="3" message="1625" wParam="0" lParam="2" sParam="" />
+            <Action type="3" message="1602" wParam="0" lParam="0" sParam="\\\\" />
+            <Action type="3" message="1702" wParam="0" lParam="898" sParam="" />
+            <Action type="3" message="1701" wParam="0" lParam="1609" sParam="" />
+        </Macro>
+        <Macro name="HTML_CODE_ENTAG" Ctrl="no" Alt="yes" Shift="no" Key="190">
+            <Action type="0" message="2177" wParam="0" lParam="0" sParam="" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&lt;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="c" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="o" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="d" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="e" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&gt;" />
+            <Action type="0" message="2179" wParam="0" lParam="0" sParam="" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&lt;" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="/" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="c" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="o" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="d" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="e" />
+            <Action type="1" message="2170" wParam="0" lParam="0" sParam="&gt;" />
+        </Macro>
+        <Macro name="STR_LITERAL" Ctrl="no" Alt="no" Shift="no" Key="0">
+            <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
+            <Action type="3" message="1601" wParam="0" lParam="0" sParam='&quot;(.*?)&quot;' />
+            <Action type="3" message="1625" wParam="0" lParam="2" sParam="" />
+            <Action type="3" message="1602" wParam="0" lParam="0" sParam='L\(&quot;\1&quot;\)' />
+            <Action type="3" message="1702" wParam="0" lParam="898" sParam="" />
+            <Action type="3" message="1701" wParam="0" lParam="1609" sParam="" />
+        </Macro>
+        <Macro name="WSTR_LITERAL" Ctrl="no" Alt="no" Shift="no" Key="0">
+            <Action type="3" message="1700" wParam="0" lParam="0" sParam="" />
+            <Action type="3" message="1601" wParam="0" lParam="0" sParam='L&quot;(.*?)&quot;' />
+            <Action type="3" message="1625" wParam="0" lParam="2" sParam="" />
+            <Action type="3" message="1602" wParam="0" lParam="0" sParam='WL\(&quot;\1&quot;\)' />
+            <Action type="3" message="1702" wParam="0" lParam="898" sParam="" />
+            <Action type="3" message="1701" wParam="0" lParam="1609" sParam="" />
+        </Macro>
+    </Macros>
+    <UserDefinedCommands>
+        <Command name="Build C++ file" Ctrl="no" Alt="no" Shift="no" Key="0">D:\P\MT\cmd\msvc_build.cmd $(NAME_PART) $(CURRENT_DIRECTORY)</Command>
+        <Command name="Build all libs" Ctrl="no" Alt="no" Shift="no" Key="0">D:\P\MT\cmd\all_libs_build.cmd</Command>
+        <Command name="Add keywords" Ctrl="no" Alt="no" Shift="no" Key="0">D:\P\NppCustomFuncs\nppautos.exe</Command>
+        <Command name="DBG Log" Ctrl="no" Alt="no" Shift="no" Key="0">D:\P\MT\dbgf\DBG.LOG</Command>
+        <Command name="Notepad++ Shortcuts" Ctrl="no" Alt="no" Shift="no" Key="0">notepad++ C:\Users\ScienceDiscoverer\AppData\Roaming\Notepad++\shortcuts.xml</Command>
+        <Command name="Notepad++ Context Menu" Ctrl="no" Alt="no" Shift="no" Key="0">notepad++ C:\Users\ScienceDiscoverer\AppData\Roaming\Notepad++\contextMenu.xml</Command>
+        <Command name="FF Customise" Ctrl="no" Alt="no" Shift="no" Key="0">notepad++ C:\Users\ScienceDiscoverer\AppData\Roaming\Mozilla\Firefox\Profiles\dos5ea2c.default-release\chrome\userChrome.css C:\Users\ScienceDiscoverer\AppData\Roaming\Mozilla\Firefox\Profiles\dos5ea2c.default-release\chrome\userContent.css</Command>
+        <Command name="Wikipedia Search" Ctrl="no" Alt="no" Shift="no" Key="0">https://en.wikipedia.org/wiki/Special:Search?search=$(CURRENT_WORD)</Command>
+        <Command name="Google Feel Lucky" Ctrl="no" Alt="no" Shift="no" Key="0">http://www.google.com/search?q=$(CURRENT_WORD)&amp;btnI</Command>
+        <Command name="Open file new inst." Ctrl="no" Alt="no" Shift="no" Key="0">$(NPP_FULL_FILE_PATH) $(CURRENT_WORD) -nosession -multiInst</Command>
+    </UserDefinedCommands>
+    <PluginCommands>
+        <PluginCommand moduleName="ColumnTools.dll" internalID="2" Ctrl="yes" Alt="no" Shift="yes" Key="67" />
+        <PluginCommand moduleName="XMLTools.dll" internalID="31" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <PluginCommand moduleName="XMLTools.dll" internalID="4" Ctrl="no" Alt="no" Shift="no" Key="0" />
+    </PluginCommands>
+    <ScintillaKeys />
+</NotepadPlus>

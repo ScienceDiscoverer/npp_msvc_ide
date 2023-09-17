@@ -1,0 +1,461 @@
+#pragma once
+
+#include <stdp>
+#include <txtp>
+#include <time>
+
+#ifdef DEBUG
+	#pragma comment( lib, "sddbd" )
+#else
+	#pragma comment( lib, "sddb" )
+#endif
+
+#pragma comment( lib, "user32" )
+
+// TODO MAKE DBG WINDOW REAL TIME UPDATE PRING, INSTEAD OF NEWLINE REWRITE ONLY 1 LINE ASAP
+
+//#define _DBG_BP_OFF
+#ifndef _DBG_BP_OFF
+	#define _DBG_SBP 	{_dbgWnd();_softBp(__LINE__);}
+	#define _DBG_SBPNJ 	{_dbgWnd();_softBpNj(__LINE__);}
+	#define _DBG_HBP 	RaiseException(EXCEPTION_BREAKPOINT, 0, 0, NULL)
+	#define _DBG_P(x)	{_dbgWnd();dbgp|#x;_pVarName();_p((x));_pVarVal();}
+	#define _DBG_PH(x)	{_dbgWnd();dbgp|#x;_pVarName();dbgp|"0x"|H;_p((x));_pVarVal();}
+#else
+	#define _DBG_SBP
+	#define _DBG_SBPNJ
+	#define _DBG_HBP
+	#define _DBG_P(x)
+	#define _DBG_PH(x)
+#endif
+
+// Bits		Recommended binary setting 	Description
+// 31-30	11 	Basic status of the code: 11 = error, 00 = success, 01 = informational, 10 = warning.
+//    29	 1 	Client bit. Set to 1 for user-defined codes.
+//    28	 0 	Reserved bit. (Leave set to 0.)
+#define EXCEPTION_CPP_LOWERCASE 0xE06D7363
+#define EXCEPTION_CPP_UPPERCASE 0xE04D5343
+// NON STANDART EXCEPTIONS
+#define EXCEPTION_HEAP_CORRUPTION 0xC0000374
+// CUSTOM EXCEPTIONS BEG
+#define EXCEPTION_TXT_BUFF_OVERRUN		0xE0000000
+#define EXCEPTION_T2I_NON_NUMBER		0xE0000001
+#define EXCEPTION_H2I_NON_NUMBER		0xE0000002
+#define EXCEPTION_T2I_OVERFLOW			0xE0000003
+#define EXCEPTION_H2I_OVERFLOW			0xE0000004
+#define EXCEPTION_TXTSP_P1_LESS_P0		0xE0000005
+#define EXCEPTION_TXTRP_P1_LESS_P0		0xE0000006
+#define EXCEPTION_TXTDP_P1_LESS_P0		0xE0000007
+
+#define EXCEPTION_DARR_OUT_OF_RANGE 	0xE0000011
+#define EXCEPTION_BINF_OUT_OF_RANGE		0xE0000012
+#define EXCEPTION_TXTA_OUT_OF_RANGE		0xE0000013
+#define EXCEPTION_WTXTA_OUT_OF_RANGE	0xE0000014
+#define EXCEPTION_UI64A_OUT_OF_RANGE	0xE0000015
+
+#define EXCEPTION_MATH_MPOW_OVERFLOW	0xE0000100
+
+#define EXCEPTION_ASSERT_FAIL			0xE1000000
+// CUSTOM EXCEPTIONS END
+
+#ifndef ALL_ASSERT_OFF
+	#define ASSERT(x) _dbg_assert_line=__LINE__;((x) ? (void)0 : RaiseException(EXCEPTION_ASSERT_FAIL, 0, 1, &_dbg_assert_line))
+#else
+	#define ASSERT(x)
+#endif
+
+#define EXCEPT_TXT_UTF8  0
+#define EXCEPT_TXT_UTF16 1
+
+#define TRY __try {
+#define EXCEPT } __except(efilter(GetExceptionInformation())) {}
+//GetExceptionCode() --> may be usefull for quick flitering
+
+#define DBG_TOSTR_1(x) DBG_TOSTR_0(x)
+#define DBG_TOSTR_0(x) #x
+#define DBG_LINE DBG_TOSTR_1(__LINE__)
+
+#define DBG_FILE __FILE__
+#define DBG_DATE __DATE__
+#define DBG_TIME __TIME__
+
+// TIMERS
+#define FSW(x) QueryPerformanceCounter(&sw_fs[x].st[0x0]); // Fast Stop Watch
+#define FSWS0(x) QueryPerformanceCounter(&sw_fs[x].et[0x0]); QueryPerformanceCounter(&sw_fs[x].st[0x1]);
+#define FSWS1(x) QueryPerformanceCounter(&sw_fs[x].et[0x1]); QueryPerformanceCounter(&sw_fs[x].st[0x2]);
+#define FSWS2(x) QueryPerformanceCounter(&sw_fs[x].et[0x2]); QueryPerformanceCounter(&sw_fs[x].st[0x3]);
+#define FSWS3(x) QueryPerformanceCounter(&sw_fs[x].et[0x3]); QueryPerformanceCounter(&sw_fs[x].st[0x4]);
+#define FSWS4(x) QueryPerformanceCounter(&sw_fs[x].et[0x4]); QueryPerformanceCounter(&sw_fs[x].st[0x5]);
+#define FSWS5(x) QueryPerformanceCounter(&sw_fs[x].et[0x5]); QueryPerformanceCounter(&sw_fs[x].st[0x6]);
+#define FSWS6(x) QueryPerformanceCounter(&sw_fs[x].et[0x6]); QueryPerformanceCounter(&sw_fs[x].st[0x7]);
+#define FSWS7(x) QueryPerformanceCounter(&sw_fs[x].et[0x7]); QueryPerformanceCounter(&sw_fs[x].st[0x8]);
+#define FSWS8(x) QueryPerformanceCounter(&sw_fs[x].et[0x8]); QueryPerformanceCounter(&sw_fs[x].st[0x9]);
+#define FSWS9(x) QueryPerformanceCounter(&sw_fs[x].et[0x9]); QueryPerformanceCounter(&sw_fs[x].st[0xA]);
+#define FSWSA(x) QueryPerformanceCounter(&sw_fs[x].et[0xA]); QueryPerformanceCounter(&sw_fs[x].st[0xB]);
+#define FSWSB(x) QueryPerformanceCounter(&sw_fs[x].et[0xB]); QueryPerformanceCounter(&sw_fs[x].st[0xC]);
+#define FSWSC(x) QueryPerformanceCounter(&sw_fs[x].et[0xC]); QueryPerformanceCounter(&sw_fs[x].st[0xD]);
+#define FSWSD(x) QueryPerformanceCounter(&sw_fs[x].et[0xD]); QueryPerformanceCounter(&sw_fs[x].st[0xE]);
+#define FSWSE(x) QueryPerformanceCounter(&sw_fs[x].et[0xE]); QueryPerformanceCounter(&sw_fs[x].st[0xF]);
+#define FSWSF(x) QueryPerformanceCounter(&sw_fs[x].et[0xF]);
+
+#define FSWACC(x) for(int sw_i = 0; sw_i < 0x10; ++sw_i) { if(!sw_fs[x].et[sw_i].QuadPart) break; sw_fs[x].t[sw_i] += sw_fs[x].et[sw_i].QuadPart - sw_fs[x].st[sw_i].QuadPart; }
+
+#define FSWT(F, T) fsw2txt(sw_fs[F].t[T], fswTtot(F))
+#define FSWTOT(F) fsw2txt(fswTtot(F), fswTtot(F))
+
+#ifndef STOPWATCHES
+#define SWMAX 0x80
+#define SWSET ASSERT((sw_id)<SWMAX);QueryPerformanceCounter(&sw_stime[sw_id]);
+#define SWSTOP QueryPerformanceCounter(&sw_etime[sw_id]);sw_timing[sw_id] += (ui64)(sw_etime[sw_id].QuadPart-sw_stime[sw_id].QuadPart);++sw_timings[sw_id++];
+#define SWPRINT if(sw_first_print)sw_id = 0,sw_first_print = false;ASSERT((sw_id)<SWMAX);swPrint(sw_id++);
+#define SWP if(sw_first_print)sw_id = 0,sw_first_print = false;ASSERT((sw_id)<SWMAX);swPrintRaw(sw_id++);
+#define SWPDIFF SWP swDiff(sw_id-1, sw_id); SWP
+#define SWIDRESET sw_id = 0;
+#define SWRESET memset(sw_timing, 0, SWMAX * sizeof(ui64));memset(sw_timings, 0, SWMAX * sizeof(ui64));sw_first_print = true; SWIDRESET
+#endif
+
+typedef struct
+{
+	ui64 tt;
+	ui64 t[0x10];
+	LARGE_INTEGER st[0x10];
+	LARGE_INTEGER et[0x10];
+} SW_FUNC;
+
+extern LARGE_INTEGER sw_stime[SWMAX];
+extern LARGE_INTEGER sw_etime[SWMAX];
+extern ui64 sw_timing[SWMAX];
+extern ui64 sw_timings[SWMAX];
+extern ui64 sw_id;
+extern bool sw_first_print;
+
+extern SW_FUNC sw_fs[0x10];
+
+extern HANDLE _dbg_std_in_;
+extern HANDLE _dbg_std_out_;
+
+extern ULONG_PTR _dbg_assert_line;
+
+extern HANDLE soft_breakpoint_event;
+
+extern txtp dbgp;
+
+txt sw2txt(ui64 i);
+txt fsw2txt(ui64 timing, ui64 ttot);
+void swDiff(ui64 i_left, ui64 i_right);
+
+inline ui64 fswTtot(ui64 f)
+{
+	if(sw_fs[f].tt == 0)
+	{
+		for(int i = 0; i < 0x10; ++i)
+		{
+			sw_fs[f].tt += sw_fs[f].t[i];
+		}
+	}
+	
+	return sw_fs[f].tt;
+}
+
+inline void swPrint(ui64 i)
+{
+	if(i > 0)
+	{
+		static CONSOLE_SCREEN_BUFFER_INFO csbi;
+		GetConsoleScreenBufferInfo(_dbg_std_out_, &csbi);
+		WORD col = WORD((csbi.wAttributes & 0xFFF0) | (i & 0xF));
+		SetConsoleTextAttribute(_dbg_std_out_, col);
+	}
+	
+	p|"SW"|i|D|": "|sw2txt(i)|N;
+}
+
+inline void swPrintRaw(ui64 i)
+{
+	p|TAR|sw2txt(i);
+}
+
+inline ui64 swMs(ui64 i)
+{
+	return (sw_etime[i].QuadPart - sw_stime[i].QuadPart)/(1000000/sw_ns_per_tick);
+}
+
+void _dbgSelLine(ui64 ln);
+void _dbgSelLineNoMark(ui64 ln);
+void _dbgHighlightLine(ui64 ln);
+void _dbgOpenFile(const char *fn);
+void _dbgCleanSelects();
+void _dbgDeselectAll();
+void _dbgSetFocusToNpp();
+void _dbgSetCleanSelectsHandler();
+
+void _dbgWnd();
+void _softBp(ui64 bp_line);
+void _softBpNj(ui64 bp_line);
+void _pVarName();
+void _pVarVal();
+void _p(ui64 ui);
+void _p(ui32 ui);
+void _p(uli32 ui);
+void _p(ui16 ui);
+void _p(i64 i);
+void _p(i32 i);
+void _p(li32 i);
+void _p(i16 i);
+void _p(wchar_t wc);
+void _p(char c);
+void _p(bool b);
+//void _p(float f);
+//void _p(double d);
+//void _p(long double d);
+void _p(const void *vp);
+void _p(const char *ccp);
+void _p(const wchar_t *ccp);
+void _p(const txt& t);
+void _p(const wtxt& t);
+
+void pexcept(_EXCEPTION_RECORD *er, HANDLE proc);
+int efilter(_EXCEPTION_POINTERS *ep);
+
+inline void prect(const RECT &rc)
+{
+	p|N|"   T:"|rc.top|
+	  N|"   L:"|rc.left|N|
+		"   _________________\n"
+		"   |               |\n"
+		"   |               |\n"
+		"   |               |\n"
+		"   |_______________|R:"|rc.right|N|
+		"                    B:"|rc.bottom|N|N;
+}
+
+inline void prect(const SMALL_RECT &rc)
+{
+	p|N|"   T:"|rc.Top|
+	  N|"   L:"|rc.Left|N|
+		"   _________________\n"
+		"   |               |\n"
+		"   |               |\n"
+		"   |               |\n"
+		"   |_______________|R:"|rc.Right|N|
+		"                    B:"|rc.Bottom|N|N;
+}
+
+inline txt rect2txt(const RECT &rc)
+{
+	txtp tp;
+	tp |"   T:"|rc.top|N
+	   |"   L:"|rc.left|N|
+		"   ___________\n"
+		"   |         |\n"
+		"   |_________|R:"|rc.right|N|
+		"              B:"|rc.bottom|N;
+	return *tp;
+}
+
+inline txt rect2txt(const SMALL_RECT &rc)
+{
+	txtp tp;
+	tp |"   T:"|rc.Top|N
+	   |"   L:"|rc.Left|N|
+		"   ___________\n"
+		"   |         |\n"
+		"   |_________|R:"|rc.Right|N|
+		"              B:"|rc.Bottom|N;
+	return *tp;
+}
+
+inline txt txt2hex(const txt &t)
+{
+	txtp tp;
+	tp|I;
+	for(ui64 i = 0; i < ~t; ++i)
+	{
+		tp|t[i]|'|'|b2h(t[i]);
+		if(i != ~t-1)
+		{
+			tp|S;
+		}
+	}
+	tp|I;
+	return *tp;
+}
+
+inline txt txt2hex(const wtxt &t)
+{
+	txtp tp;
+	tp|I;
+	for(ui64 i = 0; i < ~t; ++i)
+	{
+		tp|t[i]|'|'|H|(ui16)t[i]|S;
+		if(i != ~t-1)
+		{
+			tp|S;
+		}
+	}
+	tp|I;
+	return *tp;
+}
+
+inline txt str2hex(const char *s)
+{
+	txtp tp;
+	--s;
+	tp|I;
+	while(*++s != 0)
+	{
+		tp|*s|'|'|b2h(*s)|S;
+		if(*(s+1) != 0)
+		{
+			tp|S;
+		}
+	}
+	tp|I;
+	return *tp;
+}
+
+inline txt str2hex(const wchar_t *s)
+{
+	txtp tp;
+	--s;
+	tp|I;
+	while(*++s != 0)
+	{
+		tp|*s|'|'|H|(ui16)*s|S;
+		if(*(s+1) != 0)
+		{
+			tp|S;
+		}
+	}
+	tp|I;
+	return *tp;
+}
+
+inline txt truncStr(const char *s, const char *se, ui64 up_to)
+{
+	bool add_ellip = true;
+	if(s + up_to > se)
+	{
+		up_to = (ui64)(se - s);
+		add_ellip = false;
+	}
+	
+	txt res = up_to;
+	memcpy(res, s, up_to);
+	txtssz(res, up_to);
+	
+	if(add_ellip)
+	{
+		res += L("...");
+	}
+	
+	return res;
+}
+
+inline wtxt truncStr(const wchar_t *s, const wchar_t *se, ui64 up_to)
+{
+	bool add_ellip = true;
+	if(s + up_to > se)
+	{
+		up_to = (ui64)(se - s);
+		add_ellip = false;
+	}
+	
+	wtxt res = up_to;
+	memcpy(res, s, up_to * sizeof(wchar_t));
+	txtssz(res, up_to);
+	
+	if(add_ellip)
+	{
+		res += WL("...");
+	}
+	
+	return res;
+}
+
+inline void dbgmb(const txt &m)
+{
+	MessageBoxA(NULL, m, "DBG", MB_OK | MB_ICONSTOP);
+}
+
+inline ui64 dbgmbChoice(const txt &m)
+{
+	i32 res = MessageBoxA(NULL, m, "DBG", MB_CANCELTRYCONTINUE | MB_ICONEXCLAMATION);
+	if(res == IDTRYAGAIN)
+	{
+		return 1;
+	}
+	if(res == IDCONTINUE)
+	{
+		return 2;
+	}
+	
+	return 0;
+}
+
+inline void _conall()
+{
+	static bool conalloced = GetConsoleWindow() != NULL;
+	if(!conalloced)
+	{
+		AllocConsole();
+		_dbg_std_in_ = GetStdHandle(STD_OUTPUT_HANDLE);
+		_dbg_std_out_ = GetStdHandle(STD_INPUT_HANDLE);
+		p|UH;
+		conalloced = true;
+	}
+}
+
+extern LARGE_INTEGER file_log_fmove_dist;
+inline void dbgFileLog(const txt &msg)
+{
+	// Create or open File or Device =================================================================
+	HANDLE f = CreateFileA(
+		"D:\\P\\MT\\dbgf\\DBG.LOG",	//   [I]  Name of the file or device to create/open
+		GENERIC_WRITE,				//   [I]  Requested access GENERIC_READ|GENERIC_WRITE|0
+		FILE_SHARE_WRITE,			//   [I]  Sharing mode FILE_SHARE_READ|WRITE|DELETE|0
+		NULL,						// [I|O]  SECURITY_ATTRIBUTES for file, handle inheritability
+		OPEN_ALWAYS,				//   [I]  Action to take if file/device exist or not
+		0,							//   [I]  Attributes and flags for file/device
+		NULL);						// [I|O]  Handle to template file to copy attributes from
+	// ===============================================================================================
+	
+	SetFilePointerEx(f, file_log_fmove_dist, NULL, FILE_END);
+	
+	SYSTEMTIME lt;
+	GetLocalTime(&lt);
+	txtp t;
+	t|SPC('0')|SPN(2)|lt.wHour|':'|SPN(2)|lt.wMinute|':'|SPN(2)|lt.wSecond;
+	t|'.'|SPN(3)|lt.wMilliseconds|DP;
+	
+	static DWORD bw;
+	WriteFile(f, *t, (DWORD)~*t, &bw, NULL);
+	WriteFile(f, " [", 2, &bw, NULL);
+	WriteFile(f, msg, (DWORD)~msg, &bw, NULL);
+	WriteFile(f, "]\r\n", 3, &bw, NULL);
+	CloseHandle(f);
+}
+
+inline void dbgFileLog(const wtxt &msg)
+{
+	dbgFileLog(wt2u8(msg));
+}
+
+inline txt err2txt(DWORD err)
+{
+	char buff[300];
+	
+	FormatMessageA(
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		err,
+		0,
+		buff,
+		300,
+		NULL);
+	
+	txt out = cstr({ buff, strl(buff) });
+	txtd(out, ~out-2, 2); // Remove pesky newline
+	return out;
+}

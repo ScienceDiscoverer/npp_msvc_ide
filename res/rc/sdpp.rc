@@ -1,0 +1,89 @@
+#include <windows.h>
+
+#define	IDD_FIND_IN_FILES		2500
+#define	ID_BAKA					(IDD_FIND_IN_FILES + 1)
+#define	ID_UGO_STATIC			(IDD_FIND_IN_FILES + 5)
+
+#define IDI_SMALLDOT_ICON		100
+#define IDI_SMALLDOT_DM_ICON	101
+#define IDR_SMALLDOT_BMP		102
+
+#define IDI_COMMENT_ICON		103
+#define IDI_COMMENT_DM_ICON		104
+#define IDR_COMMENT_BMP			105
+
+#define IDI_TABS_ICON			106
+#define IDI_TABS_DM_ICON		107
+#define IDR_TABS_BMP			108
+
+#define IDI_DEBUG_BP_ICON		109
+#define IDI_DEBUG_BP_DM_ICON	110
+#define IDI_DEBUG_BP_BMP		111
+
+#define IDI_DEBUG_DP_ICON		112
+#define IDI_DEBUG_DP_DM_ICON	113
+#define IDI_DEBUG_DP_BMP		114
+
+#define IDI_DUPE_FILE_ICON		115
+#define IDI_DUPE_FILE_DM_ICON	116
+#define IDI_DUPE_FILE_BMP		117
+
+#ifndef RESOURCE_FILE_INCLUDED
+
+#define VERSION_VALUE "0.1\0"
+#define VERSION_DIGITALVALUE 0, 1, 0, 0
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION	VERSION_DIGITALVALUE
+PRODUCTVERSION	VERSION_DIGITALVALUE
+FILEFLAGSMASK	0x3fL
+FILEFLAGS 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+	BLOCK	"VarFileInfo"
+	BEGIN
+		VALUE	"Translation",	0x409,	1200
+	END
+	BLOCK	"StringFileInfo"
+	BEGIN
+		BLOCK "040904b0"
+		BEGIN
+			VALUE	"CompanyName",	"ScienceDiscoverer"
+			VALUE	"FileDescription",	"ScienceDiscoverer's C++ Tools"
+			VALUE	"FileVersion",	VERSION_VALUE
+			VALUE	"InternalName",	"sdpp.dll"
+			VALUE	"LegalCopyright",	"Copyleft 2023 by ScienceDiscoverer"
+			VALUE	"OriginalFilename",	"sdpp.dll"
+			VALUE	"ProductName",	"sdpp"
+			VALUE	"ProductVersion",	VERSION_VALUE
+		END
+	END
+END
+
+IDI_SMALLDOT_ICON		ICON		"..\\ico\\smalldot_white_bs.ico"
+IDI_SMALLDOT_DM_ICON	ICON		"..\\ico\\smalldot.ico"
+IDR_SMALLDOT_BMP		BITMAP		"..\\ico\\smalldot.bmp"
+
+IDI_COMMENT_ICON		ICON		"..\\ico\\lcomm_black.ico"
+IDI_COMMENT_DM_ICON		ICON		"..\\ico\\lcomm.ico"
+IDR_COMMENT_BMP			BITMAP		"..\\ico\\lcomm.bmp"
+
+IDI_TABS_ICON			ICON		"..\\ico\\tabs.ico"
+IDI_TABS_DM_ICON		ICON		"..\\ico\\tabs.ico"
+IDR_TABS_BMP			BITMAP		"..\\ico\\tabs.bmp"
+
+IDI_DEBUG_BP_ICON		ICON		"..\\ico\\debugbp_white.ico"
+IDI_DEBUG_BP_DM_ICON	ICON		"..\\ico\\debugbp.ico"
+IDI_DEBUG_BP_BMP		BITMAP		"..\\ico\\debugbp.bmp"
+
+IDI_DEBUG_DP_ICON		ICON		"..\\ico\\debugdp_white.ico"
+IDI_DEBUG_DP_DM_ICON	ICON		"..\\ico\\debugdp.ico"
+IDI_DEBUG_DP_BMP		BITMAP		"..\\ico\\debugdp.bmp"
+
+IDI_DUPE_FILE_ICON		ICON		"..\\ico\\filedupe_white.ico"
+IDI_DUPE_FILE_DM_ICON	ICON		"..\\ico\\filedupe.ico"
+IDI_DUPE_FILE_BMP		BITMAP		"..\\ico\\filedupe.bmp"
+
+#endif

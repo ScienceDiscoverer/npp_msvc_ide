@@ -1,0 +1,243 @@
+#pragma once
+
+#include "types.h"
+
+#define EXCEPTION_MATH_MPOW_OVERFLOW 0xE0000100
+
+#define MATH_MPOW_MAX_MODULUS 0x100000000
+
+#define MAX(x,y) (((x) > (y)) ? (x) : (y))
+#define MIN(x,y) (((x) < (y)) ? (x) : (y))
+
+inline ui64 abs(ui64 i)
+{
+	return (i64)i < 0 ? (i64)i * -1 : i;
+}
+
+inline ui32 abs(ui32 i)
+{
+	return (i32)i < 0 ? (i32)i * -1 : i;
+}
+
+inline ui16 abs(ui16 i)
+{
+	return (ui16)((i16)i < 0 ? (i16)i * -1 : i);
+}
+
+inline ui8 abs(ui8 i)
+{
+	return (ui8)((i8)i < 0 ? (i8)i * -1 : i);
+}
+
+inline i64 abs(i64 i)
+{
+	return i < 0 ? i * -1 : i;
+}
+
+inline i32 abs(i32 i)
+{
+	return i < 0 ? i * -1 : i;
+}
+
+inline i16 abs(i16 i)
+{
+	return i < 0 ? i * -1 : i;
+}
+
+inline i8 abs(i8 i)
+{
+	return i < 0 ? i * -1 : i;
+}
+
+inline ui64 mpow(ui64 b, ui64 e, ui64 m) // Repeated squaring [ O(log2 e) ]
+{
+	if(m == 1)
+	{
+		return 0;
+	}
+	
+	// if((m - 1) * (m - 1) NOT overflows)
+	// Somehow overflow (carry because of unsigned ints) flag must be checked -> better done in ASM
+	// For 64 bit CPU word no need to do flag check, just check if number is less then 2^32 (2^32 * 2^32 = 2^64)
+	if(m > MATH_MPOW_MAX_MODULUS)
+	{
+		RaiseException(EXCEPTION_MATH_MPOW_OVERFLOW, 0, 0, NULL);
+	}
+	
+	ui64 res = 1; // b^0
+	b = b % m;
+	while(e != 0)
+	{
+		if(e & 1) // This effectively checks least significant bit of exponent
+		{
+			res = res * b % m;
+		}
+		
+		e >>= 1; // This effectively divides exponent by 2, in order to check next bit
+		b = b * b % m;
+	}
+	
+	return res;
+}
+
+inline ui64 mpowStrMatch(ui64 b, ui64 e, ui64 m)
+{
+	ui64 res = 1;
+	//b = b % m; // In string matching this inequality is always true: b < m
+	while(e != 0)
+	{
+		if(e & 1)
+		{
+			res = res * b % m;
+		}
+		
+		e >>= 1;
+		b = b * b % m;
+	}
+	
+	return res;
+}
+
+inline ui64 mpowDivAndConq(ui64 b, ui64 e, ui64 m) // Divide & Conquer [ O(e) ]
+{
+	if(m == 1)
+	{
+		return 0;
+	}
+	
+	ui64 c = 1;
+	ui64 e_prime = 0;
+	while(e_prime < e)
+	{
+		++e_prime;
+		c = b * c % m;
+	}
+	
+	return c;
+}
+
+inline ui64 sqrt(ui64 x) // Binary Search [ O(log2 x) ]
+{
+	if(x <= 1)
+	{
+		return x;
+	}
+	
+	ui64 b = 1, e = x/2;
+	
+	while(b <= e)
+	{
+		ui64 m = b + (e - b)/2;
+		
+		// Traditional version. Fails when m * m overflows CPU register
+		//ui64 m = (b + e)/2; --> Potential for overflow
+		//ui64 sqr = m * m
+		//if(sqr == x)
+		//{
+		//	return m;
+		//}
+		//if(sqr <= x)
+		
+		if(m <= x/m) // m * m <= x <--> (m * m)/m <= x/m <--> m <= x/m
+		{
+			b = m + 1;
+		}
+		else
+		{
+			e = m - 1;
+		}
+	}
+	
+	return b - 1;
+}
+
+inline bool isPrime(ui64 x) // Optimised Brute Force [ O(sqrt(x)) ]
+{
+	if(x == 0 || x == 1)
+	{
+		return false;
+	}
+	
+	ui64 xsqrt = sqrt(x);
+	
+	for(ui64 i = 2; i <= xsqrt; ++i)
+	{
+		if(x % i == 0)
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+//#define PRIME_UTILITIES
+#ifdef PRIME_UTILITIES
+// Finds largest multiplier of x such that result fits into one CPU word
+#pragma warning( disable : 4701 )
+inline ui64 bgstWordMult(ui64 x)
+{
+	if(x == 0)
+	{
+		return 0;
+	}
+	if(x == 1)
+	{
+		return UI64_MAX;
+	}
+	
+	ui64 b = 0, e = UI64_MAX, res;
+
+	while(b <= e)
+	{
+		ui64 m = (b + e)/2;
+		
+		ui64 prod = 0;
+		for(ui64 i = 0; i < x; ++i)
+		{
+			prod += m;
+			if(prod < m) // Carry Flag set (overflow)
+			{
+				e = m - 1;
+				goto continue_main_loop;
+			}
+		}
+		
+		b = m + 1;
+		res = m;
+	continue_main_loop:;
+	}
+	
+	return res;
+}
+#pragma warning( default : 4701 )
+
+// Finds largest multiplier of x such that result fits into one CPU word and is prime number
+inline ui64 bgstWordPrimeMult(ui64 x)
+{								
+	ui64 mult = bgstWordMult(x);
+	for(ui64 i = mult; i != UI64_MAX; --i)
+	{
+		if(isPrime(i))
+		{
+			return i;
+		}
+	}
+	
+	return 0;
+}
+
+// Finds largest prime number starting from x
+inline ui64 bgstPrime(ui64 x)
+{								
+	for(ui64 i = x; i != UI64_MAX; --i)
+	{
+		if(isPrime(i))
+		{
+			return i;
+		}
+	}
+	
+	return 0;
+}
+#endif

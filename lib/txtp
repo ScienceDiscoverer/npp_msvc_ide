@@ -1,0 +1,668 @@
+#pragma once
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <txt>
+
+#include "padinf.h"
+
+#ifdef DEBUG
+#pragma comment( lib, "txtpd" )
+#else
+#pragma comment( lib, "txtp" )
+#endif
+
+#define TXT_PRINTER
+
+class TxtPrinter
+{
+public:
+	TxtPrinter();
+	~TxtPrinter() = default;
+	
+	TxtPrinter(const TxtPrinter &other) = delete;
+	TxtPrinter(TxtPrinter &&other) = delete;
+	TxtPrinter operator=(const TxtPrinter &other) = delete;
+	TxtPrinter operator=(TxtPrinter &&other) = delete;
+	
+	TxtPrinter & operator|(ui64 ui);
+	TxtPrinter & operator|(ui32 ui);
+	TxtPrinter & operator|(uli32 ui);
+	TxtPrinter & operator|(ui16 ui);
+	TxtPrinter & operator|(i64 i);
+	TxtPrinter & operator|(i32 i);
+	TxtPrinter & operator|(li32 i);
+	TxtPrinter & operator|(i16 i);
+	TxtPrinter & operator|(wchar_t wc);
+	TxtPrinter & operator|(char c);
+	TxtPrinter & operator|(bool b);
+	/* TODO
+	TxtPrinter &operator|(float f);
+	TxtPrinter &operator|(double d);
+	TxtPrinter &operator|(long double d);
+	*/
+	TxtPrinter & operator|(const void *vp);
+	TxtPrinter & operator|(const char *ccp);
+	TxtPrinter & operator|(cstr cs);
+	
+	TxtPrinter & operator|(const txt& t);
+	
+	TxtPrinter & operator|(TxtPrinter &(*func)(TxtPrinter &tp));
+	TxtPrinter & operator|(TxtPrinter &tp);
+	TxtPrinter & operator|(PadInfo pi);
+	TxtPrinter & operator|(SpaceNum sn);
+	
+	txt & operator*();
+	
+	friend TxtPrinter & H(TxtPrinter &tp);	// Next number as hex
+	friend TxtPrinter & S(TxtPrinter &tp);	// Print Space
+	friend TxtPrinter & N(TxtPrinter &tp);	// Print Newline
+	friend TxtPrinter & CR(TxtPrinter &tp);	// Print Carriage Return
+	friend TxtPrinter & PN(TxtPrinter &tp);	// Pad next number with '/' ' hundreds/bytes
+	friend TxtPrinter & DP(TxtPrinter &tp);	// Disable all padding (sets default values)
+	friend TxtPrinter & CL(TxtPrinter &tp);	// Clear the buffer
+	friend TxtPrinter & I(TxtPrinter &tp);	// Print opening/closing bracket [/]
+	
+	friend PadInfo SP(ui64 len);			// Set padding length
+	friend PadInfo SPC(char c);				// Set padding character
+	friend PadInfo SPD(ui64 dir);			// Set padding direction
+	friend PadInfo SPN(ui64 len);			// Set padding length for next print only
+	friend PadInfo SPCN(char c);			// Set padding character for next print only
+	friend PadInfo SPDN(ui64 dir);			// Set padding direction for next print only
+	
+	friend SpaceNum S(ui64 n);				// Print n Spaces
+	
+private:
+	txt PadDec(const txt &dn);
+	txt PadHex(const txt &hn);
+	ui64 PrintPad(ui64 txtl);
+	void PrintCenterPad(ui64 padl, bool right);
+	void ResetSinglePad();
+	
+private:
+	static wchar_t defpad;		// Default padding character
+	
+private:
+	txt text;					// Main text buffer
+	ui64 padlen;				// Next print's padding length
+	ui64 pre_padlen;			// Previous padding length
+	ui64 paddir;				// Padding direction
+	ui64 pre_paddir;			// Previous padding direction
+	wchar_t padchar;			// Padding char
+	wchar_t pre_padchar;		// Previous padding char
+	bool singpad;				// Single pad mode (only next print)
+	bool pre_padc_set;			// Prev. padding char was set
+	bool hex;					// Hex numbers mode
+	bool npad;					// Number padding style
+};
+
+typedef TxtPrinter txtp;
+
+inline TxtPrinter::TxtPrinter()
+{
+	padlen = 0;
+	pre_padlen = UI64_MAX;
+	paddir = PADL;
+	pre_paddir = UI64_MAX;
+	singpad = false;
+	padchar = defpad;
+	pre_padc_set = false;
+	hex = false;
+	npad = false;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(ui64 ui)
+{
+	txt it = hex ? hex = false, npad ? PadHex(i2h(ui)) : i2h(ui) : npad ? PadDec(i2t(ui)) : i2t(ui);
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(ui32 ui)
+{
+	txt it = hex ? hex = false, npad ? PadHex(i2h(ui)) : i2h(ui) : npad ? PadDec(i2t(ui)) : i2t(ui);
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(uli32 uli)
+{
+	txt it = hex ? hex = false, npad ? PadHex(i2h(uli)) : i2h(uli) : npad ? PadDec(i2t(uli)) : i2t(uli);
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(ui16 ui)
+{
+	txt it = hex ? hex = false, npad ? PadHex(i2h(ui)) : i2h(ui) : npad ? PadDec(i2t(ui)) : i2t(ui);
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(i64 i)
+{
+	txt it = hex ? hex = false, npad ? PadHex(i2h((ui64)i)) : i2h((ui64)i) : npad ? PadDec(i2t(i)) : i2t(i);
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(i32 i)
+{
+	txt it = hex ? hex = false, npad ? PadHex(i2h((ui64)i)) : i2h((ui64)i) : npad ? PadDec(i2t(i)) : i2t(i);
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(li32 li)
+{
+	txt it = hex ? hex = false, npad ? PadHex(i2h((ui64)li)) : i2h((ui64)li) : npad ? PadDec(i2t(li)) : i2t(li);
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(i16 i)
+{
+	txt it = hex ? hex = false, npad ? PadHex(i2h((ui64)i)) : i2h((ui64)i) : npad ? PadDec(i2t(i)) : i2t(i);
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(wchar_t wc)
+{
+	if(paddir == PADR)
+	{
+		text += (char)wc;
+		PrintPad(1);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(1);
+		text += (char)wc;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += (char)wc;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(char c)
+{
+	if(paddir == PADR)
+	{
+		text += c;
+		PrintPad(1);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(1);
+		text += c;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += c;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(bool b)
+{
+	txt btxt;
+	if(b)
+	{
+		btxt = L("true");
+	}
+	else
+	{
+		btxt = L("true");
+	}
+	
+	if(paddir == PADR)
+	{
+		text += btxt;
+		PrintPad(~btxt);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~btxt);
+		text += btxt;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += btxt;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+ /* TODO
+inline TxtPrinter & TxtPrinter::operator|(float f)
+{
+	
+}
+
+inline TxtPrinter & TxtPrinter::operator|(double d)
+{
+	
+}
+
+inline TxtPrinter & TxtPrinter::operator|(long double d)
+{
+	
+}
+*/
+inline TxtPrinter & TxtPrinter::operator|(const void *vp)
+{
+	txt it = i2h((ui64)vp);
+	txti(it, 0, L("0x"));
+	
+	if(paddir == PADR)
+	{
+		text += it;
+		PrintPad(~it);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~it);
+		text += it;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += it;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(const char *ccp)
+{
+	ui64 ccpl = strl(ccp);
+	if(paddir == PADR)
+	{
+		text += { ccp, ccpl };
+		PrintPad(ccpl);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(ccpl);
+		text += { ccp, ccpl };
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += { ccp, ccpl };
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(cstr cs)
+{
+	if(paddir == PADR)
+	{
+		text += cs;
+		PrintPad(cs.s);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(cs.s);
+		text += cs;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += cs;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(const txt& t)
+{
+	if(paddir == PADR)
+	{
+		text += t;
+		PrintPad(~t);
+	}
+	else if(paddir == PADL)
+	{
+		PrintPad(~t);
+		text += t;
+	}
+	else // Center
+	{
+		ui64 lr_pad = padlen/2;
+		PrintCenterPad(lr_pad, false);
+		text += t;
+		PrintCenterPad(lr_pad + padlen % 2, true);
+	}
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(TxtPrinter &(*func)(TxtPrinter &tp))
+{
+	return func(*this);
+}
+
+inline TxtPrinter & TxtPrinter::operator|(TxtPrinter &tp)
+{
+	return tp;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(PadInfo pi)
+{
+	if(pi.val & PAD_INFO_PAD_NEXT)
+	{
+		singpad = true;
+		pi.val &= 0xDFFFFFFFFFFFFFFF;
+	}
+	
+	ui64 pset_type = pi.val & 0xC000000000000000; // 0x11000...
+	switch(pset_type)
+	{
+	case PAD_INFO_LENGTH: // Is zero, no need to use the mask
+		if(singpad)
+		{
+			pre_padlen = padlen;
+		}
+		padlen = pi.val;
+		break;
+	case PAD_INFO_CHAR:
+		if(singpad)
+		{
+			pre_padchar = padchar;
+			pre_padc_set = true;
+		}
+		padchar = (wchar_t)(pi.val & 0x3FFFFFFFFFFFFFFF);
+		break;
+	case PAD_INFO_DIR:
+		if(singpad)
+		{
+			pre_paddir = paddir;
+		}
+		paddir = pi.val & 0x3FFFFFFFFFFFFFFF;
+		break;
+	default:
+		break;
+	}
+	
+	return *this;
+}
+
+inline TxtPrinter & TxtPrinter::operator|(SpaceNum sn)
+{
+	if(sn.n == 0)
+	{
+		return *this;
+	}
+	
+	txt sp = sn.n;
+	memset(sp, ' ', sn.n);
+	txtssz(sp, sn.n);
+	text += sp;
+	return *this;
+}
+
+inline txt & TxtPrinter::operator*()
+{
+	return text;
+}
+
+inline ui64 TxtPrinter::PrintPad(ui64 txtl)
+{
+	if(txtl >= padlen)
+	{
+		if(singpad)
+		{
+			ResetSinglePad();
+		}
+		return 0;
+	}
+
+	txtl = padlen - txtl;
+	txt pad = txtl;
+	memset(pad, (char)padchar, txtl);
+	txtssz(pad, txtl);
+	text += pad;
+	
+	if(singpad)
+	{
+		ResetSinglePad();
+	}
+	
+	return txtl;
+}
+
+inline void TxtPrinter::PrintCenterPad(ui64 padl, bool right)
+{
+	if(padl == 0)
+	{
+		if(singpad && right)
+		{
+			ResetSinglePad();
+		}
+		return;
+	}
+	
+	txt pad = padl;
+	memset(pad, (char)padchar, padl);
+	txtssz(pad, padl);
+	text += pad;
+	
+	if(singpad && right)
+	{
+		ResetSinglePad();
+	}
+}
+
+inline void TxtPrinter::ResetSinglePad()
+{
+	if(pre_padlen != UI64_MAX)
+	{
+		padlen = pre_padlen;
+		pre_padlen = UI64_MAX;
+	}
+	if(pre_padc_set)
+	{
+		padchar = pre_padchar;
+		pre_padc_set = false;
+	}
+	if(pre_paddir != UI64_MAX)
+	{
+		paddir = pre_paddir;
+		pre_paddir = UI64_MAX;
+	}
+	
+	singpad = false;
+}
+
+inline TxtPrinter & H(TxtPrinter &tp)
+{
+	tp.hex = true;
+	return tp;
+}
+
+inline TxtPrinter & S(TxtPrinter &tp)
+{
+	tp.text += ' ';
+	return tp;
+}
+
+inline TxtPrinter & N(TxtPrinter &tp)
+{
+	tp.text += '\n';
+	return tp;
+}
+
+inline TxtPrinter & CR(TxtPrinter &tp)
+{
+	tp.text += '\r';
+	return tp;
+}
+
+inline TxtPrinter & PN(TxtPrinter &tp)
+{
+	tp.npad = true;
+	return tp;
+}
+
+inline TxtPrinter & DP(TxtPrinter &tp)
+{
+	tp.padlen = 0;
+	tp.padchar = tp.defpad;
+	tp.paddir = PADL;
+	return tp;
+}
+
+inline TxtPrinter & CL(TxtPrinter &tp)
+{
+	txtclr(tp.text);
+	return tp;
+}
+
+inline TxtPrinter & I(TxtPrinter &tp)
+{
+	static char brak = '[';
+	tp.text += brak;
+	brak = brak == '[' ? ']' : '[';
+	return tp;
+}

@@ -1,0 +1,207 @@
+#include <txt>
+#include <wtxt>
+
+#pragma comment( lib, "user32" )
+
+inline bool64 clip(const txt &t) // Copy text to clipboard
+{
+	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, ~t+1);
+	mcpy(GlobalLock(hmem), t, ~t+1);
+	GlobalUnlock(hmem);
+	if(OpenClipboard(NULL))
+	{
+		if(EmptyClipboard()) // Using this with OpenClipboard(NULL) should not work, but it does! Magick?
+		{
+			if(SetClipboardData(CF_TEXT, hmem))
+			{
+				CloseClipboard();
+				return true; // HGLOBAL hmem must not be freed, as it is now owned by the system
+			}
+		}
+		
+		CloseClipboard();
+	}
+	
+	GlobalFree(hmem);
+	return false;
+	// If SetClipboardData succeeds, the system owns the object identified by the hMem parameter.
+	// The application may not write to or free the data once ownership has been transferred to the system,
+	// but it can lock and read from the data until the CloseClipboard function is called
+}
+
+inline bool64 clip(const txt &t, HWND wnd)
+{
+	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, ~t+1);
+	mcpy(GlobalLock(hmem), t, ~t+1);
+	GlobalUnlock(hmem);
+	if(OpenClipboard(wnd))
+	{
+		if(EmptyClipboard())
+		{
+			if(SetClipboardData(CF_TEXT, hmem))
+			{
+				CloseClipboard();
+				return true;
+			}
+		}
+		
+		CloseClipboard();
+	}
+	
+	GlobalFree(hmem);
+	return false;
+}
+
+inline bool64 clip(const wtxt &t)
+{
+	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, (~t+1) * sizeof(wchar_t));
+	mcpy(GlobalLock(hmem), t, (~t+1) * sizeof(wchar_t));
+	GlobalUnlock(hmem);
+	if(OpenClipboard(NULL))
+	{
+		if(EmptyClipboard())
+		{
+			if(SetClipboardData(CF_UNICODETEXT, hmem))
+			{
+				CloseClipboard();
+				return true;
+			}
+		}
+		
+		CloseClipboard();
+	}
+	
+	GlobalFree(hmem);
+	return false;
+}
+
+inline bool64 clip(const wtxt &t, HWND wnd)
+{
+	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, (~t+1) * sizeof(wchar_t));
+	mcpy(GlobalLock(hmem), t, (~t+1) * sizeof(wchar_t));
+	GlobalUnlock(hmem);
+	if(OpenClipboard(wnd))
+	{
+		if(EmptyClipboard())
+		{
+			if(SetClipboardData(CF_UNICODETEXT, hmem))
+			{
+				CloseClipboard();
+				return true;
+			}
+		}
+		
+		CloseClipboard();
+	}
+	
+	GlobalFree(hmem);
+	return false;
+}
+
+inline bool64 paste(txt &t) // Paste contents of a clipboard into text
+{
+	if(!IsClipboardFormatAvailable(CF_TEXT)) // Use GetPriorityClipboardFormat if multitype supported
+	{
+		return false;
+	}
+	
+	if(OpenClipboard(NULL))
+	{
+		HGLOBAL hmem = GetClipboardData(CF_TEXT);
+		if(hmem != NULL)
+		{
+			const char *mem = (const char *)GlobalLock(hmem);
+			if(mem != NULL)
+			{
+				t = { mem, strl(mem) };
+				GlobalUnlock(hmem);
+			}
+		}
+		
+		CloseClipboard();
+		return true;
+	}
+	
+	return false;
+}
+
+inline bool64 paste(txt &t, HWND wnd)
+{
+	if(!IsClipboardFormatAvailable(CF_TEXT))
+	{
+		return false;
+	}
+	
+	if(OpenClipboard(wnd))
+	{
+		HGLOBAL hmem = GetClipboardData(CF_TEXT);
+		if(hmem != NULL)
+		{
+			const char *mem = (const char *)GlobalLock(hmem);
+			if(mem != NULL)
+			{
+				t = { mem, strl(mem) };
+				GlobalUnlock(hmem);
+			}
+		}
+		
+		CloseClipboard();
+		return true;
+	}
+	
+	return false;
+}
+
+inline bool64 paste(wtxt &t)
+{
+	if(!IsClipboardFormatAvailable(CF_UNICODETEXT))
+	{
+		return false;
+	}
+	
+	if(OpenClipboard(NULL))
+	{
+		HGLOBAL hmem = GetClipboardData(CF_UNICODETEXT);
+		if(hmem != NULL)
+		{
+			const wchar_t *mem = (const wchar_t *)GlobalLock(hmem);
+			if(mem != NULL)
+			{
+				t = { mem, strl(mem) };
+				GlobalUnlock(hmem);
+			}
+		}
+		
+		CloseClipboard();
+		return true;
+	}
+	
+	return false;
+}
+
+inline bool64 paste(wtxt &t, HWND wnd)
+{
+	if(!IsClipboardFormatAvailable(CF_UNICODETEXT))
+	{
+		return false;
+	}
+	
+	if(OpenClipboard(wnd))
+	{
+		HGLOBAL hmem = GetClipboardData(CF_UNICODETEXT);
+		if(hmem != NULL)
+		{
+			const wchar_t *mem = (const wchar_t *)GlobalLock(hmem);
+			if(mem != NULL)
+			{
+				t = { mem, strl(mem) };
+				GlobalUnlock(hmem);
+			}
+		}
+		
+		CloseClipboard();
+		return true;
+	}
+	
+	return false;
+}

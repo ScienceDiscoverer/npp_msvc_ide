@@ -1,0 +1,263 @@
+#pragma once
+
+#include <darr>
+#include <txt>
+
+#define EXCEPTION_TXTA_OUT_OF_RANGE 0xE0000013
+
+#ifndef ALL_ASSERT_OFF
+	#define TXTA_ASSERT_RANGE(x) if((x) >= s){RaiseException(EXCEPTION_TXTA_OUT_OF_RANGE, 0, 0, 0);}
+#else
+	#define TXTA_ASSERT_RANGE(x)
+#endif
+
+// TODO ADD APPENDIN FUNC THAT WILL SORT NEW ENTRIEZ AUTOMATICALLY
+// TODO ADD SORT FUNCS
+// TODO ADD CSTR ARRAYS CONSTRUCTORS, MUCH MUCH FASTER CONSTRUCTION, TO WTXTA TOO
+
+class txta : public darr
+{
+public:
+	txta();
+	txta(ui64 init_size);				// Initial allocation size
+	txta(const char **cstra);			// Empty string terminated const string array
+	txta(const char **cstra, ui64 sz);	// Known length const string array
+	txta(const txta &o);
+	txta(txta &&o);
+	
+	~txta();
+	
+	txta & operator=(const txta &o);
+	txta & operator=(txta &&o);
+	
+	txt & operator[](ui64 i);
+	const txt & operator[](ui64 i) const;
+	txt & Last();
+	const txt & Last() const;
+	
+	txta & operator<<(const txt &data);	// Append single element
+	txta & AddUnique(const txt &data);	// Append unique elemets only
+	
+	txta & Clear(); 					// Clear operation
+	
+	txta & Print();						// Prints array contents to std output
+	
+private:
+	txt *d;
+};
+
+inline txta::txta()
+{
+	d = NULL;
+}
+
+inline txta::txta(ui64 init_size)
+{
+	ts = init_size;
+	s = 0;
+	d = (txt *)Alloc(ts * sizeof(txt));
+	memset(d, 0, ts * sizeof(txt)); // All texts invalidated
+}
+
+inline txta::txta(const char **cstra)
+{
+	ts = UI64_MAX;
+	while(cstra[++ts][0] != 0)
+	{
+		// Do nothing...
+	}
+	
+	s = ts;
+	d = (txt *)Alloc(ts * sizeof(txt));
+	memset(d, 0, ts * sizeof(txt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = { cstra[i], strl(cstra[i]) };
+	}
+}
+
+inline txta::txta(const char **cstra, ui64 sz)
+{
+	ts = sz;
+	s = ts;
+	d = (txt *)Alloc(ts * sizeof(txt));
+	memset(d, 0, ts * sizeof(txt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = { cstra[i], strl(cstra[i]) };
+	}
+}
+
+inline txta::txta(const txta &o)
+{
+	if(o.s == 0)
+	{
+		return;
+	}
+	
+	s = o.s;
+	ts = s;
+	
+	d = (txt *)Alloc(ts * sizeof(txt));
+	memset(d, 0, ts * sizeof(txt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = o.d[i];
+	}
+}
+
+inline txta::txta(txta &&o)
+{
+	ts = o.ts;
+	s = o.s;
+	d = o.d;
+	o.ts = 0;
+	o.s = 0;
+	o.d = NULL;
+}
+
+inline txta::~txta()
+{
+	for(ui64 i = 0; i < s; ++i)
+	{
+		txtfree(d[i]); // No need to invalidate texts
+	}
+	
+	DARR_FREE(d);
+}
+
+inline txta & txta::operator=(const txta &o)
+{
+	for(ui64 i = 0; i < s; ++i)
+	{
+		txtfree(d[i]); // No need to invalidate texts. Yet
+	}
+	
+	if(ts < o.s)
+	{
+		DARR_FREE(d);
+		ts = o.s;
+		d = (txt *)Alloc(ts * sizeof(txt));
+		s = ts;
+	}
+	
+	memset(d, 0, s * sizeof(txt)); // All texts invalidated
+	
+	s = o.s;
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = o.d[i];
+	}
+	
+	return *this;
+}
+
+inline txta & txta::operator=(txta &&o)
+{
+	if(this != &o)
+	{
+		for(ui64 i = 0; i < s; ++i)
+		{
+			txtfree(d[i]); // No need to invalidate texts
+		}
+		
+		DARR_FREE(d);
+		
+		ts = o.ts;
+		s = o.s;
+		d = o.d;
+		o.ts = 0;
+		o.s = 0;
+		o.d = NULL;
+	}
+	
+	return *this;
+}
+
+inline txt & txta::operator[](ui64 i)
+{
+	TXTA_ASSERT_RANGE(i)
+	return d[i];
+}
+
+inline const txt & txta::operator[](ui64 i) const
+{
+	TXTA_ASSERT_RANGE(i)
+	return d[i];
+}
+
+inline txt & txta::Last()
+{
+	return d[s-1];
+}
+
+inline const txt & txta::Last() const
+{
+	return d[s-1];
+}
+
+inline txta & txta::operator<<(const txt &data)
+{
+	ui64 ns = s + 1;
+	if(ts < ns)
+	{
+		d = (txt *)ReAlloc(d, ns, sizeof(txt));
+		memset(&d[s], 0, (ts - s) * sizeof(txt)); // All new texts invalidated
+	}
+
+	d[s] = data;
+	s = ns;
+	
+	return *this;
+}
+
+inline txta & txta::AddUnique(const txt &data)
+{
+	for(ui64 i = 0; i < s; ++i) // Filter the clones
+	{
+		if(d[i] == data)
+		{
+			return *this;
+		}
+	}
+	
+	ui64 ns = s + 1;
+	if(ts < ns)
+	{
+		d = (txt *)ReAlloc(d, ns, sizeof(txt));
+		memset(&d[s], 0, (ts - s) * sizeof(txt)); // All new texts invalidated
+	}
+
+	d[s] = data;
+	s = ns;
+	
+	return *this;
+}
+
+inline txta & txta::Clear()
+{
+	for(ui64 i = 0; i < s; ++i)
+	{
+		txtfree(d[i]); // Will invalidate texts later
+	}
+	
+	memset(d, 0, s * sizeof(txt)); // All texts invalidated
+	s = 0;
+	
+	return *this;
+}
+
+inline txta & txta::Print()
+{
+	HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	for(ui64 i = 0; i < s; ++i)
+	{
+		WriteFile(oh, d[i], ~d[i], NULL, NULL);
+		WriteFile(oh, "\n", 1, NULL, NULL);
+	}
+	
+	return *this;
+}

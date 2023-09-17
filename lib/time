@@ -1,0 +1,191 @@
+#pragma once
+
+#include <txt>
+#include <wtxt>
+#include <ui64a>
+
+#ifdef DEBUG
+	#pragma comment( lib, "timed" )
+#else
+	#pragma comment( lib, "time" )
+#endif
+
+extern ui64 sw_ns_per_tick;
+
+txt ticks2txt(ui64 timing);
+wtxt ticks2wtxt(ui64 timing);
+
+extern ui64a swt_st;
+extern ui64a swt_ed;
+
+inline void swSet(ui64 i)
+{
+	swt_st << 0, swt_ed << 0;
+	QueryPerformanceCounter((LARGE_INTEGER *)&swt_st[i]);
+}
+
+inline void swStop(ui64 i)
+{
+	QueryPerformanceCounter((LARGE_INTEGER *)&swt_ed[i]);
+}
+
+inline txt swTime(ui64 i)
+{
+	return ticks2txt(swt_ed[i] - swt_st[i]);
+}
+
+inline wtxt swTimeW(ui64 i)
+{
+	return ticks2wtxt(swt_ed[i] - swt_st[i]);
+}
+
+
+
+
+// TODO ADD CONSOLE TIME OUTPUT
+
+//HANDLE tm, swtm;
+//LARGE_INTEGER tout, swtout;
+//
+//THREAD timer(void *param)
+//{
+//	//p|"TIMER IS UP!!!"|N;
+//	
+//	tout.QuadPart = -10000000; // 1 second
+//	//tout.QuadPart = -1000000; // 100 ms
+//	//tout.QuadPart = -10000; // 1 ms
+//	//SetWaitableTimer(tm, &tout, 0, NULL, NULL, FALSE);
+//	
+//	SYSTEMTIME lt;
+//	GetLocalTime(&lt);
+//	ui64 pre_ms = lt.wMilliseconds;
+//	
+//	if(pre_ms > 20) // Wait for system clock to catch up and make delay ~ 20 ms
+//	{
+//		Sleep(1000 - (DWORD)pre_ms + 20);
+//	}
+//	else if(pre_ms < 15)
+//	{
+//		Sleep(15 - (DWORD)pre_ms);
+//	}
+//	
+//	while(1)
+//	{
+//		//if(lt.wMilliseconds > 0)
+//		//{
+//		//	//tout_sync.QuadPart = lt.wMilliseconds * -10000;
+//		//	//SetWaitableTimer(tm_sync, &tout_sync, 0, NULL, NULL, FALSE);
+//		//	//WaitForSingleObject(tm_sync, INFINITE);
+//		//	Sleep(lt.wMilliseconds);
+//		//}
+//		
+//		SetWaitableTimer(tm, &tout, 0, NULL, NULL, FALSE);
+//		
+//		//SWPRINT
+//		//SWRESET
+//		
+//		GetLocalTime(&lt);
+//		p|SCP(0,0)|SPC('0')|SPN(2)|lt.wHour|':'|SPN(2)|lt.wMinute|':'|SPN(2)|lt.wSecond;
+//		p|'.'|SPN(3)|lt.wMilliseconds|DP|CR;
+//		
+//		if(lt.wMilliseconds < pre_ms)
+//		{
+//			tout.QuadPart -= 10000; // 1 ms
+//			if(lt.wMilliseconds < 15)
+//			{
+//				tout.QuadPart -= 10000;
+//			}
+//		}
+//		else if(lt.wMilliseconds > pre_ms)
+//		{
+//			tout.QuadPart += 10000; // 1 ms
+//			if(lt.wMilliseconds > 25)
+//			{
+//				tout.QuadPart += 10000;
+//			}
+//		}
+//		
+//		pre_ms = lt.wMilliseconds;
+//		//SWSET
+//		WaitForSingleObject(tm, INFINITE);
+//		//SWSTOP
+//		//p|"TIMED EVENT..."|N;
+//	}		
+//	
+//	return 0;
+//}
+//
+//bool64 sw_stop;
+//THREAD stopwatch(void *param)
+//{	
+//	swtout.QuadPart = -10000000; // 1 second
+//	
+//	SYSTEMTIME lt, slt;
+//	GetLocalTime(&lt);
+//	slt = lt;
+//	ui64 ssec = (ui64)(slt.wSecond + slt.wMinute * 60 + slt.wHour * 3600 + slt.wDay * 86400);
+//	
+//	ui64 pre_ms = lt.wMilliseconds;
+//	
+//	if(pre_ms > 20) // Wait for system clock to catch up and make delay ~ 20 ms
+//	{
+//		Sleep(1000 - (DWORD)pre_ms + 20);
+//	}
+//	else if(pre_ms < 15)
+//	{
+//		Sleep(15 - (DWORD)pre_ms);
+//	}
+//	
+//	while(1)
+//	{
+//		SetWaitableTimer(swtm, &swtout, 0, NULL, NULL, FALSE);
+//		
+//		GetLocalTime(&lt);
+//		ui64 sec = (ui64)(lt.wSecond + lt.wMinute * 60 + lt.wHour * 3600 + lt.wDay * 86400);
+//		ui64 spas = sec - ssec;
+//		
+//		ui64 d = spas/86400, h = spas%86400/3600, m = spas%86400%3600/60, s = spas%86400%3600%60;
+//		p|SCP(0,1)|SPC('0')|S(30)|SCP(0,1)|d|" d "|SPN(2)|h|':'|SPN(2)|m|':'|SPN(2)|s|DP;
+//		
+//		if(lt.wMilliseconds < pre_ms)
+//		{
+//			swtout.QuadPart -= 10000; // 1 ms
+//			if(lt.wMilliseconds < 15)
+//			{
+//				swtout.QuadPart -= 10000;
+//			}
+//		}
+//		else if(lt.wMilliseconds > pre_ms)
+//		{
+//			swtout.QuadPart += 10000; // 1 ms
+//			if(lt.wMilliseconds > 25)
+//			{
+//				swtout.QuadPart += 10000;
+//			}
+//		}
+//		
+//		pre_ms = lt.wMilliseconds;
+//		WaitForSingleObject(swtm, INFINITE);
+//	}		
+//	
+//	return 0;
+//}
+//
+//i32 wmain()
+//{
+//	p|DC;
+//	
+//	SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+//	
+//	tm = CreateWaitableTimer(NULL, FALSE, NULL);
+//	swtm = CreateWaitableTimer(NULL, FALSE, NULL);
+//	//CreateThread(NULL, 0, timer, NULL, 0, NULL);
+//	CreateThread(NULL, 0, stopwatch, NULL, 0, NULL);
+//	
+//	
+//	p|P;
+//	CloseHandle(tm);
+//	
+//	p|TB|P;
+//	return 0;
+//}

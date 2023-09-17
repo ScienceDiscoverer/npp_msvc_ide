@@ -1,0 +1,130 @@
+#pragma once
+
+#include <mmanip>
+
+#include "types.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#ifdef DEBUG
+	#pragma comment( lib, "darrd" )
+#else
+	#pragma comment( lib, "darr" )
+#endif
+
+#ifndef HEAP_MULTI_THREAD_MODE				// Can only use in 3 cases:
+	#define HEAP_FLAGS HEAP_NO_SERIALIZE	// Proc. with only one thread
+#else										// Proc. mult. threads but only 1 uses this heap
+	#define HEAP_FLAGS 0					// Proc. mult. threads with custom mutual exclusion
+#endif
+
+#define EXCEPTION_DARR_OUT_OF_RANGE 0xE0000011
+
+#ifndef ALL_ASSERT_OFF
+	#define DARR_ASSERT_RANGE(x) if((x) >= s){RaiseException(EXCEPTION_DARR_OUT_OF_RANGE, 0, 0, 0);}
+#else
+	#define DARR_ASSERT_RANGE(x)
+#endif
+
+#define DARR_REALLOC_MULT	2
+#define DARR_MIN_TRUE_SIZE	8
+
+#define DARR_FREE(x) HeapFree(darr::heap, 0, (x))
+
+class darr
+{
+public:
+	darr();
+	darr(const darr &o) = delete;
+	darr(darr &&o) = delete;
+	
+	~darr() = default;
+	
+	darr & operator=(const darr &o) = delete;
+	darr & operator=(darr &&o) = delete;
+	
+	ui64 operator~() const; // Size operator
+	ui64 operator!() const; // True Size Operator
+	
+	friend bool64 operator==(const darr &a, void (*empty_func)(void));
+	friend bool64 operator!=(const darr &a, void (*empty_func)(void));
+	friend bool64 operator==(void (*empty_func)(void), const darr &a);
+	friend bool64 operator!=(void (*empty_func)(void), const darr &a);
+
+protected:
+	void * ReAlloc(void *d, ui64 ns, ui64 s_of_type);
+
+protected:
+	static void * Alloc(ui64 bytes);
+	
+protected:
+	static HANDLE heap;
+	
+protected:
+	ui64 ts;
+	ui64 s;
+};
+
+inline darr::darr()
+{
+	ts = 0;
+	s = 0;
+}
+
+inline ui64 darr::operator~() const
+{
+	return s;
+}
+
+inline ui64 darr::operator!() const
+{
+	return ts;
+}
+
+inline void * darr::ReAlloc(void *d, ui64 ns, ui64 s_of_type)
+{
+	ts = ns < DARR_MIN_TRUE_SIZE ? DARR_MIN_TRUE_SIZE : ns * DARR_REALLOC_MULT;
+	void *tmp = Alloc(ts * s_of_type);
+	if(s != 0)
+	{
+		mcpy(tmp, d, s * s_of_type);
+		DARR_FREE(d);
+	}
+	
+	return tmp;
+}
+
+inline void * darr::Alloc(ui64 bytes)
+{
+	if(heap == NULL)
+	{
+		heap = HeapCreate(HEAP_FLAGS, 0x100000, 0); // 1 MB, 256 pages, 16x 64k granularity
+	}
+	
+	return HeapAlloc(heap, 0, bytes);
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator==(const darr &a, void (*empty_func)(void))
+{
+	return a.s == 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator!=(const darr &a, void (*empty_func)(void))
+{
+	return a.s != 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator==(void (*empty_func)(void), const darr &a)
+{
+	return a.s == 0;
+}
+
+#pragma warning( suppress : 4100 )
+inline bool64 operator!=(void (*empty_func)(void), const darr &a)
+{
+	return a.s != 0;
+}

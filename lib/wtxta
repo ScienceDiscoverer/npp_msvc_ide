@@ -1,0 +1,315 @@
+#pragma once
+
+#include <darr>
+#include <wtxt>
+
+#define EXCEPTION_WTXTA_OUT_OF_RANGE 0xE0000014
+
+#ifndef ALL_ASSERT_OFF
+	#define WTXTA_ASSERT_RANGE(x) if((x) >= s){RaiseException(EXCEPTION_WTXTA_OUT_OF_RANGE, 0, 0, 0);}
+#else
+	#define WTXTA_ASSERT_RANGE(x)
+#endif
+
+class wtxta : public darr
+{
+public:
+	wtxta();
+	wtxta(ui64 init_size);					// Initial allocation size
+	wtxta(const wchar_t **wcstra);			// Empty string terminated const string array
+	wtxta(const wchar_t **wcstra, ui64 sz);	// Known length const string array
+	wtxta(const wtxt *wctxta);				// Empty string terminated const texts array
+	wtxta(const wtxt *wctxta, ui64 sz);		// Known length const texts array
+	wtxta(const wtxta &o);
+	wtxta(wtxta &&o);
+	
+	~wtxta();
+	
+	wtxta & operator=(const wtxta &o);
+	wtxta & operator=(wtxta &&o);
+	
+	wtxt & operator[](ui64 i);
+	const wtxt & operator[](ui64 i) const;
+	wtxt & Last();
+	const wtxt & Last() const;
+	
+	wtxta & operator<<(const wtxt &data);	// Append single element
+	wtxta & AddUnique(const wtxt &data);	// Append unique elemets only
+	
+	wtxta & Clear(); 						// Clear operation
+	wtxta & MoveInto(wtxta &o);				// Transfer all data into another array, clearing itself
+	
+	wtxta & Print();						// Prints array contents to std output
+	
+private:
+	wtxt *d;
+};
+
+inline wtxta::wtxta()
+{
+	d = NULL;
+}
+
+inline wtxta::wtxta(ui64 init_size)
+{
+	ts = init_size;
+	s = 0;
+	d = (wtxt *)Alloc(ts * sizeof(wtxt));
+	memset(d, 0, ts * sizeof(wtxt)); // All texts invalidated
+}
+
+inline wtxta::wtxta(const wchar_t **wcstra)
+{
+	ts = UI64_MAX;
+	while(wcstra[++ts][0] != 0)
+	{
+		// Do nothing...
+	}
+	
+	s = ts;
+	d = (wtxt *)Alloc(ts * sizeof(wtxt));
+	memset(d, 0, ts * sizeof(wtxt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = { wcstra[i], strl(wcstra[i]) };
+	}
+}
+
+inline wtxta::wtxta(const wchar_t **wcstra, ui64 sz)
+{
+	ts = sz;
+	s = ts;
+	d = (wtxt *)Alloc(ts * sizeof(wtxt));
+	memset(d, 0, ts * sizeof(wtxt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = { wcstra[i], strl(wcstra[i]) };
+	}
+}
+
+inline wtxta::wtxta(const wtxt *wctxta)
+{
+	ts = UI64_MAX;
+	while(~wctxta[++ts] != 0)
+	{
+		// Do nothing...
+	}
+	
+	s = ts;
+	d = (wtxt *)Alloc(ts * sizeof(wtxt));
+	memset(d, 0, ts * sizeof(wtxt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = wctxta[i];
+	}
+}
+
+inline wtxta::wtxta(const wtxt *wctxta, ui64 sz)
+{
+	ts = sz;
+	s = ts;
+	d = (wtxt *)Alloc(ts * sizeof(wtxt));
+	memset(d, 0, ts * sizeof(wtxt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = wctxta[i];
+	}
+}
+
+inline wtxta::wtxta(const wtxta &o)
+{
+	if(o.s == 0)
+	{
+		return;
+	}
+	
+	s = o.s;
+	ts = s;
+	
+	d = (wtxt *)Alloc(ts * sizeof(wtxt));
+	memset(d, 0, ts * sizeof(wtxt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = o.d[i];
+	}
+}
+
+inline wtxta::wtxta(wtxta &&o)
+{
+	ts = o.ts;
+	s = o.s;
+	d = o.d;
+	o.ts = 0;
+	o.s = 0;
+	o.d = NULL;
+}
+
+inline wtxta::~wtxta()
+{
+	for(ui64 i = 0; i < s; ++i)
+	{
+		txtfree(d[i]); // No need to invalidate texts
+	}
+	
+	DARR_FREE(d);
+}
+
+inline wtxta & wtxta::operator=(const wtxta &o)
+{
+	for(ui64 i = 0; i < s; ++i)
+	{
+		txtfree(d[i]); // No need to invalidate texts. Yet
+	}
+	
+	if(ts < o.s)
+	{
+		DARR_FREE(d);
+		ts = o.s;
+		d = (wtxt *)Alloc(ts * sizeof(wtxt));
+		s = ts;
+	}
+	
+	memset(d, 0, s * sizeof(wtxt)); // All texts invalidated
+	
+	s = o.s;
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = o.d[i];
+	}
+	
+	return *this;
+}
+
+inline wtxta & wtxta::operator=(wtxta &&o)
+{
+	if(this != &o)
+	{
+		for(ui64 i = 0; i < s; ++i)
+		{
+			txtfree(d[i]); // No need to invalidate texts
+		}
+		
+		DARR_FREE(d);
+		
+		ts = o.ts;
+		s = o.s;
+		d = o.d;
+		o.ts = 0;
+		o.s = 0;
+		o.d = NULL;
+	}
+	
+	return *this;
+}
+
+inline wtxt & wtxta::operator[](ui64 i)
+{
+	WTXTA_ASSERT_RANGE(i)
+	return d[i];
+}
+
+inline const wtxt & wtxta::operator[](ui64 i) const
+{
+	WTXTA_ASSERT_RANGE(i)
+	return d[i];
+}
+
+inline wtxt & wtxta::Last()
+{
+	return d[s-1];
+}
+
+inline const wtxt & wtxta::Last() const
+{
+	return d[s-1];
+}
+
+inline wtxta & wtxta::operator<<(const wtxt &data)
+{
+	ui64 ns = s + 1;
+	if(ts < ns)
+	{
+		d = (wtxt *)ReAlloc(d, ns, sizeof(wtxt));
+		memset(&d[s], 0, (ts - s) * sizeof(wtxt)); // All new texts invalidated
+	}
+
+	d[s] = data;
+	s = ns;
+	
+	return *this;
+}
+
+inline wtxta & wtxta::AddUnique(const wtxt &data)
+{
+	for(ui64 i = 0; i < s; ++i) // Filter the clones
+	{
+		if(d[i] == data)
+		{
+			return *this;
+		}
+	}
+	
+	ui64 ns = s + 1;
+	if(ts < ns)
+	{
+		d = (wtxt *)ReAlloc(d, ns, sizeof(wtxt));
+		memset(&d[s], 0, (ts - s) * sizeof(wtxt)); // All new texts invalidated
+	}
+
+	d[s] = data;
+	s = ns;
+	
+	return *this;
+}
+
+inline wtxta & wtxta::Clear()
+{
+	for(ui64 i = 0; i < s; ++i)
+	{
+		txtfree(d[i]); // Will invalidate texts later
+	}
+	
+	memset(d, 0, s * sizeof(wtxt)); // All texts invalidated
+	s = 0;
+	
+	return *this;
+}
+
+inline wtxta & wtxta::MoveInto(wtxta &o)
+{
+	if(this != &o)
+	{
+		for(ui64 i = 0; i < o.s; ++i)
+		{
+			txtfree(o.d[i]); // No need to invalidate texts
+		}
+		
+		DARR_FREE(o.d);
+		
+		o.ts = ts;
+		o.s = s;
+		o.d = d;
+		ts = 0;
+		s = 0;
+		d = NULL;
+	}
+	
+	return *this;
+}
+
+inline wtxta & wtxta::Print()
+{
+	HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	for(ui64 i = 0; i < s; ++i)
+	{
+		WriteConsoleW(oh, d[i], ~d[i], NULL, NULL);
+		WriteFile(oh, "\n", 1, NULL, NULL);
+	}
+	
+	return *this;
+}

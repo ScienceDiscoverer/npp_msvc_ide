@@ -1,0 +1,33 @@
+#pragma once
+
+#include <txt>
+#include <wtxt>
+
+#ifdef DEBUG
+#pragma comment( lib, "utfd" )
+#else
+#pragma comment( lib, "utf" )
+#endif
+
+txt wt2u8(const wtxt &t16);
+wtxt t2u16(const txt &t8);
+
+txt & wt2u8(txt &t8, const wtxt &t16);
+wtxt & t2u16(wtxt &t16, const txt &t8);
+
+ui64 u8ts(const txt &t8);		// Unicode UTF-8 string True Size (actual characters)
+ui64 u16ts(const wtxt &t16);	// Unicode UTF-16 string True Size (actual characters)
+
+inline void txtMovToWtxt(txt &t, wtxt &wt) // Moves data from text to wide text, invalidating the text
+{
+	txtfree(wt);
+	txtsdt(wt, !t/2, (~t-1)/2, (wchar_t *)(char *)t);
+	txtsdt(t, 0, 0, NULL);
+}
+
+inline void wtxtMovToTxt(wtxt &wt, txt &t) // Moves data from wide text to text, invalidating the wide text
+{
+	txtfree(t);
+	txtsdt(t, !wt * 2, ~wt * 2, (char *)(wchar_t *)wt);
+	txtsdt(wt, 0, 0, NULL);
+}

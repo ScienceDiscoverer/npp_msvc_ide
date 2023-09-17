@@ -1,0 +1,280 @@
+#pragma once
+
+#include <darr>
+
+#define EXCEPTION_UI64A_OUT_OF_RANGE 0xE0000015
+
+#ifndef ALL_ASSERT_OFF
+	#define UI64A_ASSERT_RANGE(x) if((x) >= s){RaiseException(EXCEPTION_UI64A_OUT_OF_RANGE, 0, 0, 0);}
+#else
+	#define UI64A_ASSERT_RANGE(x)
+#endif
+
+class ui64a : public darr
+{
+public:
+	ui64a();
+	ui64a(ui64 init_size); // Initial allocation size
+	ui64a(const ui64a &o);
+	ui64a(ui64a &&o);
+	
+	~ui64a();
+	
+	ui64a & operator=(const ui64a &o);
+	ui64a & operator=(ui64a &&o);
+	
+	ui64 & operator[](ui64 i);
+	const ui64 & operator[](ui64 i) const;
+	ui64 & Last();
+	const ui64 & Last() const;
+	
+	ui64a & operator<<(ui64 data);	// Append single element
+	ui64a & AddUnique(ui64 data);	// Append unique elemets only
+	
+	ui64 Find(ui64 val);			// Find and return index of the first occurance of [val] in array
+	ui64a & DelVal(ui64 val);		// Delete first occurance of [val] from array
+	ui64a & DelIdx(ui64 i);			// Delete element with index [i]
+	ui64a & DelLast();				// Delete last element of the array (very fast operation)
+	
+	ui64a & Reserve(ui64 n);		// Reserve memory for [n] elements
+	ui64a & Fill(ui64 val);			// Fill all allocated space with value
+	ui64a & Clear();				// Clear operation
+	
+	ui64a & Print();				// Prints array contents to std output
+	
+private:
+	ui64 *d;
+};
+
+inline ui64a::ui64a()
+{
+	d = NULL;
+}
+
+inline ui64a::ui64a(ui64 init_size)
+{
+	ts = init_size;
+	s = 0;
+	d = (ui64 *)Alloc(ts * sizeof(ui64));
+}
+
+inline ui64a::ui64a(const ui64a &o)
+{
+	if(o.s == 0)
+	{
+		return;
+	}
+	
+	s = o.s;
+	ts = s;
+	
+	d = (ui64 *)Alloc(ts * sizeof(ui64));
+	mcpy(d, o.d, s * sizeof(ui64));
+}
+
+inline ui64a::ui64a(ui64a &&o)
+{
+	ts = o.ts;
+	s = o.s;
+	d = o.d;
+	o.ts = 0;
+	o.s = 0;
+	o.d = NULL;
+}
+
+inline ui64a::~ui64a()
+{
+	DARR_FREE(d);
+}
+
+inline ui64a & ui64a::operator=(const ui64a &o)
+{
+	s = o.s;
+	if(ts < s)
+	{
+		DARR_FREE(d);
+		ts = s;
+		d = (ui64 *)Alloc(ts * sizeof(ui64));
+	}
+	
+	mcpy(d, o.d, s * sizeof(ui64));
+	return *this;
+}
+
+inline ui64a & ui64a::operator=(ui64a &&o)
+{
+	if(this != &o)
+	{
+		DARR_FREE(d);
+		ts = o.ts;
+		s = o.s;
+		d = o.d;
+		o.ts = 0;
+		o.s = 0;
+		o.d = NULL;
+	}
+	return *this;
+}
+
+inline ui64 & ui64a::operator[](ui64 i)
+{
+	UI64A_ASSERT_RANGE(i)
+	return d[i];
+}
+
+inline const ui64 & ui64a::operator[](ui64 i) const
+{
+	UI64A_ASSERT_RANGE(i)
+	return d[i];
+}
+
+inline ui64 & ui64a::Last()
+{
+	return d[s-1];
+}
+
+inline const ui64 & ui64a::Last() const
+{
+	return d[s-1];
+}
+
+inline ui64a & ui64a::operator<<(ui64 data)
+{
+	ui64 ns = s + 1;
+	if(ts < ns)
+	{
+		d = (ui64 *)ReAlloc(d, ns, sizeof(ui64));
+	}
+
+	d[s] = data;
+	s = ns;
+	return *this;
+}
+
+inline ui64a & ui64a::AddUnique(ui64 data)
+{
+	for(ui64 i = 0; i < s; ++i) // Filter the clones
+	{
+		if(d[i] == data)
+		{
+			return *this;
+		}
+	}
+	
+	ui64 ns = s + 1;
+	if(ts < ns)
+	{
+		d = (ui64 *)ReAlloc(d, ns, sizeof(ui64));
+	}
+
+	d[s] = data;
+	s = ns;
+	return *this;
+}
+
+inline ui64 ui64a::Find(ui64 val)
+{
+	for(ui64 i = 0; i < s; ++i)
+	{
+		if(d[i] == val)
+		{
+			return i;
+		}
+	}
+	return NFND;
+}
+
+inline ui64a & ui64a::DelVal(ui64 val)
+{
+	ui64 i = Find(val);
+	if(i != NFND)
+	{
+		DelIdx(i);
+	}
+	return *this;
+}
+
+inline ui64a & ui64a::DelIdx(ui64 i)
+{
+	UI64A_ASSERT_RANGE(i)
+	ui64 *pos = d + i;
+	memmove(pos, pos + 1, (s - i - 1) * sizeof(ui64));
+	--s;
+	return *this;
+}
+
+inline ui64a & ui64a::DelLast()
+{
+	if(s > 0)
+	{
+		--s; // Yes, as simple as this!
+	}
+	return *this;
+}
+
+inline ui64a & ui64a::Reserve(ui64 n)
+{
+	if(ts == 0)
+	{
+		ts = n; // Member [s] must already be zero
+		d = (ui64 *)Alloc(ts * sizeof(ui64));
+		return *this;
+	}
+	
+	if(ts < n)
+	{
+		ts = n;
+		ui64 *tmp = (ui64 *)Alloc(ts * sizeof(ui64));
+		if(s != 0)
+		{
+			mcpy(tmp, d, s * sizeof(ui64));
+			DARR_FREE(d);
+		}
+		d = tmp;
+	}
+	return *this;
+}
+
+inline ui64a & ui64a::Fill(ui64 val)
+{
+	s = ts;
+	if(val == 0)
+	{
+		memset(d, 0, ts * sizeof(ui64));
+		return *this;
+	}
+	
+	for(ui64 i = 0; i < ts; ++i)
+	{
+		d[i] = val;
+	}
+	return *this;
+}
+
+inline ui64a & ui64a::Clear()
+{
+	s = 0;
+	return *this;
+}
+
+inline ui64a & ui64a::Print()
+{
+	HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
+	for(ui64 i = 0; i < s; ++i)
+	{
+		char b[21]; // Max digits 18446744073709551615
+		b[20] = 0;
+		ui64 c = 20;
+
+		do
+		{
+			b[--c] = i % 10 | 0x30;
+			i /= 10;
+		}
+		while(i > 0);
+		
+		WriteFile(oh, b + c, 20 - c, NULL, NULL);
+		WriteFile(oh, "\n", 1, NULL, NULL);
+	}
+	return *this;
+}
