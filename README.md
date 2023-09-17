@@ -6,7 +6,7 @@
 
 Open source alternative for MS Visual Studio, powered by `cl` compiler. Featuring no project files, simple build process, "soft" and "hard" debuggers and `mingw`-like error output styling.
 
-<img width="1000" height="582" src="D:\P\Git\npp_msvc_ide\readme\main.gif">
+<img width="1000" height="582" src="readme/main.gif">
 
 ## How to build
 
@@ -24,7 +24,7 @@ If not, you will have to merely locate this file and directory and copy-paste th
 
 2. Install `Customize Toolbar` plugin
 
-<img src="D:\P\Git\npp_msvc_ide\readme\custom_tb.png">
+<img src="readme/custom_tb.png">
 
 3. Use `appdata/roaming/npp/shortcuts.xml` in this repo as an example, you can integrate all or only some of the shortcuts. Most of them are self-explanatory. The most important being: `Build C++ file` - to actually be able to build `.cpp` files, `Build all libs` - useful for rebuilding many static libraries in defined order, `Add keywords` - uses `nppautos.exe` to override default `cpp.xml` autocompletion file with your custom functions placed in the `npp_autos.h` (you might want to back up default `cpp.xml`). What macros do:
 
@@ -48,7 +48,7 @@ echo set "LIBPATH=%LIBPATH%" | clip
 ```
 9. Alternatively, you can set this environmental variable permanently, if you want (should result in a few milliseconds faster builds). Press Win+R, enter `rundll32.exe sysdm.cpl,EditEnvironmentVariables`. In the bottom sub-window locate `Path` variable and then add **extra** variables that was injected by the Visual Studio in the correct order (for this, compare your original `Path` to one you got from the VS console). Also add `INCLUDE`, `LIB` and `LIBPATH` variables separately from `Path`. VS documentation does not encourage this, but I never ran into any issues in a long time of using this strategy
 
-<img src="D:\P\Git\npp_msvc_ide\readme\envir.png">
+<img src="readme/envir.png">
 
 10. In the `cmd/msvc_build.cmd` modify this lines to lead to your custom `.h` and `.lib` files so that you can use them for a program in any folder:
 ```
