@@ -6,8 +6,6 @@
 
 #include "padinf.h"
 
-// FIX ALL STDP AND OTHER PRINTERS TO PRING CORRECT WINDOWS CRLF!!!!!!!!!NO. FUK WASTIN 1 BYTE FOR NOTHING. FROM NOW ON I WILL ONLY USE \N NEWLINES IN ALL MY OUTPUT FILES AND SOURCES. THEREFORE NEW TODO ->>> CONVERT ALL SOURCE CODE TO \N FORMAT! SWITCH NOTEPAD TO CREATE NEW FILES WITH \N!
-
 #ifdef DEBUG
 #pragma comment( lib, "stdpd" )
 #else
@@ -68,6 +66,9 @@ public:
 	StdPrinter & operator|(StdTableColPad pn);
 	StdPrinter & operator|(ConCurPosSet cp);
 	StdPrinter & operator|(ConCurPosGet cp);
+	StdPrinter & operator|(ConBufSz bs);
+	StdPrinter & operator|(ConWndSz ws);
+	StdPrinter & operator|(ConBufWndSz bws);
 	
 	friend StdPrinter & H(StdPrinter &stdp);	// Next number as hex
 	friend StdPrinter & D(StdPrinter &stdp);	// Default color
@@ -87,6 +88,7 @@ public:
 	friend StdPrinter & EC(StdPrinter &stdp);	// Enable Cursor
 	friend StdPrinter & RC(StdPrinter &stdp);	// Restore Cursor
 	friend StdPrinter & RM(StdPrinter &stdp);	// Restore Console Default Mode
+	friend StdPrinter & RCON(StdPrinter &stdp);	// Restore all console parameters to default values
 	friend StdPrinter & S(StdPrinter &stdp);	// Print Space
 	friend StdPrinter & N(StdPrinter &stdp);	// Print Newline
 	friend StdPrinter & CR(StdPrinter &stdp);	// Print Carriage Return
@@ -94,6 +96,7 @@ public:
 	friend StdPrinter & TB(StdPrinter &stdp);	// Trimm console buffer
 	friend StdPrinter & MB(StdPrinter &stdp);	// Set console buffer to max capacity
 	friend StdPrinter & CLS(StdPrinter &stdp);	// Clear entire console buffer and reset cursor
+	friend StdPrinter & CLL(StdPrinter &stdp);	// Clear line starting from cursor position
 	friend StdPrinter & PN(StdPrinter &stdp);	// Pad next number with '/' ' hundreds/bytes
 	friend StdPrinter & DP(StdPrinter &stdp);	// Disable all padding (sets default values)
 	friend StdPrinter & PE(StdPrinter &stdp);	// Print last error (GetLastError)
@@ -117,6 +120,9 @@ public:
 	friend StdTableColPad TCP(ui64 n);			// Table add additional Padding for Column
 	friend ConCurPosSet SCP(ui64 x, ui64 y);	// Set position of console's cursor
 	friend ConCurPosGet GCP(ui64 &x, ui64 &y);	// Get position of console's cursor
+	friend ConBufSz SCB(ui64 w, ui64 h);		// Set console buffer size
+	friend ConWndSz SCW(ui64 w, ui64 h);		// Set console window size
+	friend ConBufWndSz SCBW(ui64 w, ui64 h);	// Set console buffer and window size
 	
 private:
 	static WORD GetDefConParams();
@@ -130,33 +136,34 @@ private:
 	void PrintToTable(const txt &cell);
 	
 private:
-	static DWORD bw;					// Bytes Written
-	static wchar_t defpad;				// Default padding character
-	static WORD defc;					// Default Color
-	static CONSOLE_CURSOR_INFO con;		// Cursor On
-	static CONSOLE_CURSOR_INFO coff;	// Cursor Off
-	static CONSOLE_CURSOR_INFO cdef;	// Cursor Default previous value
-	static DWORD defcm;					// Default Console Mode
+	static DWORD bw;							// Bytes Written
+	static wchar_t defpad;						// Default padding character
+	static WORD defc;							// Default Color
+	static CONSOLE_CURSOR_INFO con;				// Cursor On
+	static CONSOLE_CURSOR_INFO coff;			// Cursor Off
+	static CONSOLE_CURSOR_INFO cdef;			// Cursor Default previous value
+	static DWORD defcm;							// Default Console Mode
+	static CONSOLE_SCREEN_BUFFER_INFO dcsbi;	// Default Console Parameters
 	
 private:
-	HANDLE oh;							// Output Handle
-	HANDLE ih;							// Input Handle
-	ui64 padlen;						// Next print's padding length
-	ui64 paddir;						// Padding direction
-	ui64 pre_padlen;					// Previous padding length
-	ui64 pre_paddir;					// Previous padding direction
-	bool hex;							// Hex numbers mode
-	bool npad;							// Number padding style
-	bool singpad;						// Single pad mode (only next print)
-	bool pre_padc_set;					// Prev. padding char was set
-	wchar_t padchar;					// Padding char
-	wchar_t pre_padchar;				// Previous padding char
-	ui64 trow;							// Current table row
-	bool tmode;							// Table mode is on
-	ui8 tcelal;							// Current table cell alignment
-	ui16 txtattr;						// Current text attributes (color)
-	ui32 defocp;						// Default output code page
-	ui32 deficp;						// Default input code page
+	HANDLE oh;				// Output Handle
+	HANDLE ih;				// Input Handle
+	ui64 padlen;			// Next print's padding length
+	ui64 paddir;			// Padding direction
+	ui64 pre_padlen;		// Previous padding length
+	ui64 pre_paddir;		// Previous padding direction
+	bool hex;				// Hex numbers mode
+	bool npad;				// Number padding style
+	bool singpad;			// Single pad mode (only next print)
+	bool pre_padc_set;		// Prev. padding char was set
+	wchar_t padchar;		// Padding char
+	wchar_t pre_padchar;	// Previous padding char
+	ui64 trow;				// Current table row
+	bool tmode;				// Table mode is on
+	ui8 tcelal;				// Current table cell alignment
+	ui16 txtattr;			// Current text attributes (color)
+	ui32 defocp;			// Default output code page
+	ui32 deficp;			// Default input code page
 	ui32 reserved;
 };
 
@@ -794,11 +801,58 @@ inline StdPrinter & StdPrinter::operator|(ConCurPosGet cp)
 	return *this;
 }
 
+inline StdPrinter & StdPrinter::operator|(ConBufSz bs)
+{
+	COORD buf_sz;
+	buf_sz.X = (SHORT)bs.w;
+	buf_sz.Y = (SHORT)bs.h;
+	SetConsoleScreenBufferSize(oh, buf_sz);
+	return *this;
+}
+
+inline StdPrinter & StdPrinter::operator|(ConWndSz ws)
+{
+	SMALL_RECT wnd_pos;
+	wnd_pos.Left = 0;
+	wnd_pos.Top = 0;
+	wnd_pos.Right = (SHORT)ws.w - 1;
+	wnd_pos.Bottom = (SHORT)ws.h - 1;
+	SetConsoleWindowInfo(oh, TRUE, &wnd_pos);
+	return *this;
+}
+
+inline StdPrinter & StdPrinter::operator|(ConBufWndSz bws)
+{
+	COORD buf_sz;
+	buf_sz.X = (SHORT)bws.w;
+	buf_sz.Y = (SHORT)bws.h;
+	SMALL_RECT wnd_pos;
+	wnd_pos.Left = 0;
+	wnd_pos.Top = 0;
+	wnd_pos.Right = (SHORT)bws.w - 1;
+	wnd_pos.Bottom = (SHORT)bws.h - 1;
+	
+	CONSOLE_SCREEN_BUFFER_INFO csbi; // Buffer can't be >= window
+	GetConsoleScreenBufferInfo(oh, &csbi); // Window can't be >= buffer
+	
+	if(csbi.srWindow.Right >= (SHORT)bws.w || csbi.srWindow.Bottom >= (SHORT)bws.h)
+	{
+		SetConsoleWindowInfo(oh, TRUE, &wnd_pos);
+		SetConsoleScreenBufferSize(oh, buf_sz);
+	}
+	else
+	{
+		SetConsoleScreenBufferSize(oh, buf_sz);
+		SetConsoleWindowInfo(oh, TRUE, &wnd_pos);
+	}
+	
+	return *this;
+}
+
 inline WORD StdPrinter::GetDefConParams()
 {
 	HANDLE ohnd = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	GetConsoleScreenBufferInfo(ohnd, &csbi);
+	GetConsoleScreenBufferInfo(ohnd, &dcsbi);
 	
 	GetConsoleCursorInfo(ohnd, &cdef);
 	con = cdef;
@@ -808,8 +862,7 @@ inline WORD StdPrinter::GetDefConParams()
 	
 	HANDLE ihnd = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(ihnd, &defcm);
-	
-	return csbi.wAttributes;
+	return dcsbi.wAttributes;
 }
 
 inline txt StdPrinter::PadDec(const txt &dn)
@@ -1074,6 +1127,28 @@ inline StdPrinter & RM(StdPrinter &stdp)
 	return stdp;
 }
 
+inline StdPrinter & RCON(StdPrinter &stdp)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(stdp.oh, &csbi);
+	
+	if(csbi.srWindow.Right >= stdp.dcsbi.dwSize.X || csbi.srWindow.Bottom >= stdp.dcsbi.dwSize.Y)
+	{
+		SetConsoleWindowInfo(stdp.oh, TRUE, &stdp.dcsbi.srWindow);
+		SetConsoleScreenBufferSize(stdp.oh, stdp.dcsbi.dwSize);
+	}
+	else
+	{
+		SetConsoleScreenBufferSize(stdp.oh, stdp.dcsbi.dwSize);
+		SetConsoleWindowInfo(stdp.oh, TRUE, &stdp.dcsbi.srWindow);
+	}
+	
+	SetConsoleTextAttribute(stdp.oh, stdp.dcsbi.wAttributes);
+	SetConsoleCursorInfo(stdp.oh, &stdp.cdef);
+	SetConsoleMode(stdp.ih, stdp.defcm);
+	return stdp;
+}
+
 inline StdPrinter & S(StdPrinter &stdp)
 {
 	WriteFile(stdp.oh, " ", 1, &stdp.bw, NULL);
@@ -1132,6 +1207,20 @@ inline StdPrinter & CLS(StdPrinter &stdp)
 	FillConsoleOutputCharacter(stdp.oh, ' ', cbs, orig, &cw);
 	FillConsoleOutputAttribute(stdp.oh, csbi.wAttributes, cbs, orig, &cw);
 	SetConsoleCursorPosition(stdp.oh, orig);
+	
+	return stdp;
+}
+
+inline StdPrinter & CLL(StdPrinter &stdp)
+{
+	DWORD cw;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	
+	GetConsoleScreenBufferInfo(stdp.oh, &csbi);
+	DWORD to_clr = (DWORD)(csbi.dwSize.X - csbi.dwCursorPosition.X);
+	
+	FillConsoleOutputCharacter(stdp.oh, ' ', to_clr, csbi.dwCursorPosition, &cw);
+	FillConsoleOutputAttribute(stdp.oh, csbi.wAttributes, to_clr, csbi.dwCursorPosition, &cw);
 	
 	return stdp;
 }

@@ -32,6 +32,24 @@ struct ConCurPosGet
 	ui64 *y;
 };
 
+struct ConBufSz
+{
+	ui32 w;
+	ui32 h;
+};
+
+struct ConWndSz
+{
+	ui32 w;
+	ui32 h;
+};
+
+struct ConBufWndSz
+{
+	ui32 w;
+	ui32 h;
+};
+
 inline PadInfo SP(ui64 len)
 {
 	PadInfo pi; // 2 MS bits siginfy type of pad setting
@@ -98,4 +116,28 @@ inline ConCurPosGet GCP(ui64 &x, ui64 &y)
 	ccp.x = &x;
 	ccp.y = &y;
 	return ccp;
+}
+
+inline ConBufSz SCB(ui64 w, ui64 h)
+{
+	ConBufSz cbs;
+	cbs.w = (ui32)w;
+	cbs.h = (ui32)h;
+	return cbs;
+}
+
+inline ConWndSz SCW(ui64 w, ui64 h)
+{
+	ConWndSz cws;
+	cws.w = (ui32)w;
+	cws.h = (ui32)h;
+	return cws;
+}
+
+inline ConBufWndSz SCBW(ui64 w, ui64 h)
+{
+	ConBufWndSz cbws;
+	cbws.w = (ui32)w;
+	cbws.h = (ui32)h;
+	return cbws;
 }

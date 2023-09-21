@@ -145,7 +145,7 @@ CONSOLE_CURSOR_INFO StdPrinter::con;
 CONSOLE_CURSOR_INFO StdPrinter::coff;
 CONSOLE_CURSOR_INFO StdPrinter::cdef;
 DWORD StdPrinter::defcm;
-static CONSOLE_SCREEN_BUFFER_INFO dcsbi;
+CONSOLE_SCREEN_BUFFER_INFO StdPrinter::dcsbi;
 wchar_t StdPrinter::defpad = ' ';
 
 StdPrinter p;

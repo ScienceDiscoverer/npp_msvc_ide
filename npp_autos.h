@@ -720,6 +720,8 @@ wtxt & nameFromPath(const wtxt &path, wtxt &n);
 // txta + wtxta + ui64a
 wtxta & Print();
 // ftools
+ui64 getFileList(const cwstr *dirs, wtxta &list);
+ui64 getFileList(const cwstr *dirs, const cwstr *idirs, wtxta &list);
 ui64 getFileList(const cwstr *dirs, const cwstr *ext, ui64 exts, wtxta &list);
 ui64 getFileList(const cwstr *dirs, const cwstr *idirs, const cwstr *ext, ui64 exts, wtxta &list);
 bool64 fileExists(const char *fn);

@@ -58,6 +58,7 @@ public:
 	friend WtxtPrinter & S(WtxtPrinter &tp);	// Print Space
 	friend WtxtPrinter & N(WtxtPrinter &tp);	// Print Newline
 	friend WtxtPrinter & CR(WtxtPrinter &tp);	// Print Carriage Return
+	friend WtxtPrinter & WN(WtxtPrinter &tp);	// Print Windows Newline (\r\n)
 	friend WtxtPrinter & PN(WtxtPrinter &tp);	// Pad next number with '/' ' hundreds/bytes
 	friend WtxtPrinter & DP(WtxtPrinter &tp);	// Disable all padding (sets default values)
 	friend WtxtPrinter & CL(WtxtPrinter &tp);	// Clear the buffer
@@ -640,6 +641,12 @@ inline WtxtPrinter & N(WtxtPrinter &tp)
 inline WtxtPrinter & CR(WtxtPrinter &tp)
 {
 	tp.text += '\r';
+	return tp;
+}
+
+inline WtxtPrinter & WN(WtxtPrinter &tp)
+{
+	tp.text += '\r', tp.text += '\n';
 	return tp;
 }
 

@@ -58,6 +58,7 @@ public:
 	friend TxtPrinter & S(TxtPrinter &tp);	// Print Space
 	friend TxtPrinter & N(TxtPrinter &tp);	// Print Newline
 	friend TxtPrinter & CR(TxtPrinter &tp);	// Print Carriage Return
+	friend TxtPrinter & WN(TxtPrinter &tp);	// Print Windows Newline (\r\n)
 	friend TxtPrinter & PN(TxtPrinter &tp);	// Pad next number with '/' ' hundreds/bytes
 	friend TxtPrinter & DP(TxtPrinter &tp);	// Disable all padding (sets default values)
 	friend TxtPrinter & CL(TxtPrinter &tp);	// Clear the buffer
@@ -636,6 +637,12 @@ inline TxtPrinter & N(TxtPrinter &tp)
 inline TxtPrinter & CR(TxtPrinter &tp)
 {
 	tp.text += '\r';
+	return tp;
+}
+
+inline TxtPrinter & WN(TxtPrinter &tp)
+{
+	tp.text += '\r', tp.text += '\n';
 	return tp;
 }
 
