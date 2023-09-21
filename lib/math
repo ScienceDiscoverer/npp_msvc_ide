@@ -6,47 +6,44 @@
 
 #define MATH_MPOW_MAX_MODULUS 0x100000000
 
-#define MAX(x,y) (((x) > (y)) ? (x) : (y))
-#define MIN(x,y) (((x) < (y)) ? (x) : (y))
-
 inline ui64 abs(ui64 i)
 {
-	return (i64)i < 0 ? (i64)i * -1 : i;
+	return (i64)i < 0 ? -(i64)i : i;
 }
 
 inline ui32 abs(ui32 i)
 {
-	return (i32)i < 0 ? (i32)i * -1 : i;
+	return (i32)i < 0 ? -(i32)i : i;
 }
 
 inline ui16 abs(ui16 i)
 {
-	return (ui16)((i16)i < 0 ? (i16)i * -1 : i);
+	return (ui16)((i16)i < 0 ? -(i16)i : i);
 }
 
 inline ui8 abs(ui8 i)
 {
-	return (ui8)((i8)i < 0 ? (i8)i * -1 : i);
+	return (ui8)((i8)i < 0 ? -(i8)i : i);
 }
 
 inline i64 abs(i64 i)
 {
-	return i < 0 ? i * -1 : i;
+	return i < 0 ? -i : i;
 }
 
 inline i32 abs(i32 i)
 {
-	return i < 0 ? i * -1 : i;
+	return i < 0 ? -i : i;
 }
 
 inline i16 abs(i16 i)
 {
-	return i < 0 ? i * -1 : i;
+	return i < 0 ? -i : i;
 }
 
 inline i8 abs(i8 i)
 {
-	return i < 0 ? i * -1 : i;
+	return i < 0 ? -i : i;
 }
 
 inline ui64 mpow(ui64 b, ui64 e, ui64 m) // Repeated squaring [ O(log2 e) ]

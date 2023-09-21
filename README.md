@@ -63,9 +63,11 @@ set "lib_dir=/LIBPATH:D:\P\MT\"
 
 14. You can integrate some or all of the custom context menu entries. Use `appdata/roaming/npp/contextMenu` and copy entries to your own. You can also copy some `userDefineLang`-s from there. It has styling for `.cod` ASM output files, `.log` files and markdown.
 
-15. Last but not least, install `sdpp` plugin. It is very important as it adds many useful features but also serves as communication link between Notepad++ and `eline2npp` and `sddb` debugging library. Just copy `sdpp.dll` into your Notepad++ `plugins_folder\sdpp\sdpp.dll` and restart NPP.
+15. Optionally, you can install the theme I use too: `appdata/roaming/npp/themes/VS2019-Dark.xml`. It was support for some of the custom types/instructions I created. The theme is based on [VS2019-Dark-Npp by hellon8](https://github.com/hellon8/VS2019-Dark-Npp).
 
-16. Profit! You are ready for rapid C/C++ development in Notepad++!
+16. Last but not least, install `sdpp` plugin. It is very important as it adds many useful features but also serves as communication link between Notepad++ and `eline2npp` and `sddb` debugging library. Just copy `sdpp.dll` into your Notepad++ `plugins_folder\sdpp\sdpp.dll` and restart NPP.
+
+17. Profit! You are ready for rapid C/C++ development in Notepad++!
 
 ## How to create project file?
 There is no project files. No need for them at all. You can control compilation of individual programs easily from the source file itself by including comment in the top of your source file like this:

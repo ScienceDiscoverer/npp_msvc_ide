@@ -145,6 +145,7 @@ CONSOLE_CURSOR_INFO StdPrinter::con;
 CONSOLE_CURSOR_INFO StdPrinter::coff;
 CONSOLE_CURSOR_INFO StdPrinter::cdef;
 DWORD StdPrinter::defcm;
+static CONSOLE_SCREEN_BUFFER_INFO dcsbi;
 wchar_t StdPrinter::defpad = ' ';
 
 StdPrinter p;
@@ -189,22 +190,23 @@ StdPrinter & TB(StdPrinter &stdp)
 	COORD buff_coord = {0};
 	ReadConsoleOutputA(stdp.oh,	pci, buff_sz, buff_coord, &read_region);
 	
-	ui32 last_row = 0;
+	ui64 last_row = 0;
 	for(ui32 i = 0; i < (ui32)csbi.dwSize.Y; ++i)
 	{
-		ui32 spaces = 0;
 		for(ui32 j = 0; j < (ui32)csbi.dwSize.X; ++j)
 		{
-			if(pci[i * csbi.dwSize.X + j].Char.AsciiChar == ' ')
+			if(pci[i * csbi.dwSize.X + j].Char.AsciiChar != ' ')
 			{
-				++spaces;
+				last_row = 0;
+				goto continue_main_loop;
 			}
 		}
 		
-		if(spaces != (ui32)csbi.dwSize.X)
+		if(last_row == 0)
 		{
 			last_row = i;
 		}
+	continue_main_loop:;
 	}
 	
 	SHORT wnd_sz = csbi.srWindow.Bottom - csbi.srWindow.Top;

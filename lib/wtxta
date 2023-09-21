@@ -18,6 +18,8 @@ public:
 	wtxta(ui64 init_size);					// Initial allocation size
 	wtxta(const wchar_t **wcstra);			// Empty string terminated const string array
 	wtxta(const wchar_t **wcstra, ui64 sz);	// Known length const string array
+	wtxta(const cwstr *cwsa);						// Empty cwstr array
+	wtxta(const cwstr *cwsa, ui64 sz);			// Known length cwstr array
 	wtxta(const wtxt *wctxta);				// Empty string terminated const texts array
 	wtxta(const wtxt *wctxta, ui64 sz);		// Known length const texts array
 	wtxta(const wtxta &o);
@@ -25,6 +27,7 @@ public:
 	
 	~wtxta();
 	
+	wtxta & operator=(const cwstr *cwsa);
 	wtxta & operator=(const wtxta &o);
 	wtxta & operator=(wtxta &&o);
 	
@@ -86,6 +89,37 @@ inline wtxta::wtxta(const wchar_t **wcstra, ui64 sz)
 	for(ui64 i = 0; i < s; ++i)
 	{
 		d[i] = { wcstra[i], strl(wcstra[i]) };
+	}
+}
+
+inline wtxta::wtxta(const cwstr *cwsa)
+{
+	ts = UI64_MAX;
+	while(cwsa[++ts].s != 0)
+	{
+		// Do nothing...
+	}
+	
+	s = ts;
+	d = (wtxt *)Alloc(ts * sizeof(wtxt));
+	memset(d, 0, ts * sizeof(wtxt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = cwsa[i];
+	}
+}
+
+inline wtxta::wtxta(const cwstr *cwsa, ui64 sz)
+{
+	ts = sz;
+	s = ts;
+	d = (wtxt *)Alloc(ts * sizeof(wtxt));
+	memset(d, 0, ts * sizeof(wtxt)); // All texts invalidated
+	
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = cwsa[i];
 	}
 }
 
@@ -157,6 +191,38 @@ inline wtxta::~wtxta()
 	}
 	
 	DARR_FREE(d);
+}
+
+inline wtxta & wtxta::operator=(const cwstr *cwsa)
+{
+	for(ui64 i = 0; i < s; ++i)
+	{
+		txtfree(d[i]); // No need to invalidate texts. Yet
+	}
+	
+	ui64 nts = UI64_MAX;
+	while(cwsa[++nts].s != 0)
+	{
+		// Do nothing...
+	}
+	
+	if(ts < nts)
+	{
+		DARR_FREE(d);
+		ts = nts;
+		d = (wtxt *)Alloc(ts * sizeof(wtxt));
+		s = ts;
+	}
+	
+	memset(d, 0, s * sizeof(wtxt)); // All texts invalidated
+	
+	s = nts;
+	for(ui64 i = 0; i < s; ++i)
+	{
+		d[i] = cwsa[i];
+	}
+	
+	return *this;
 }
 
 inline wtxta & wtxta::operator=(const wtxta &o)

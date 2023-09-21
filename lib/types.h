@@ -19,6 +19,9 @@ typedef unsigned long long int bool64;
 DWORD NOTHROW 
 #define PARAMNOUSE __pragma(warning( suppress : 4100 ))
 
+#define MAX(x,y) (((x) > (y)) ? (x) : (y))
+#define MIN(x,y) (((x) < (y)) ? (x) : (y))
+
 #define NFND		0xFFFFFFFFFFFFFFFF		// Value was not found
 
 #define UI64_MAX	0xFFFFFFFFFFFFFFFF

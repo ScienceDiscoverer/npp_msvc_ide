@@ -666,6 +666,7 @@ wtxt truncStr(const wchar_t *s, const wchar_t *se, ui64 up_to);
 void dbgmb(const txt &m);
 ui64 dbgmbChoice(const txt &m);
 void dbgFileLog(const txt &msg);
+void dbgFileLog(const wtxt &msg);
 txt err2txt(DWORD err);
 // txta + wtxta + ui64a
 txta & AddUnique(const txt &data);
@@ -699,6 +700,7 @@ HWND spawnMainWnd(ui64 style, const wchar_t* title, i32 w, i32 h, ui64 pos);
 void enterMsgLoop();
 // conint
 void printProgBar(ui64 max, ui64 cur, ui64 x, ui64 y, ui64 len);
+void printProgBarMod(ui64 mod, ui64 max, ui64 cur, ui64 x, ui64 y, ui64 len);
 // time
 txt ticks2txt(ui64 timing);
 wtxt ticks2wtxt(ui64 timing);
@@ -713,11 +715,25 @@ wtxt fishOutFileExt(const wtxt &fn);
 wtxt & fishOutFileExt(const wtxt &fn, wtxt &ext);
 txt & removeLastDir(txt &dir);
 wtxt & removeLastDir(wtxt &dir);
-// fileinf.h
+txt & nameFromPath(const txt &path, txt &n);
+wtxt & nameFromPath(const wtxt &path, wtxt &n);
+// txta + wtxta + ui64a
+wtxta & Print();
+// ftools
+ui64 getFileList(const cwstr *dirs, const cwstr *ext, ui64 exts, wtxta &list);
+ui64 getFileList(const cwstr *dirs, const cwstr *idirs, const cwstr *ext, ui64 exts, wtxta &list);
 bool64 fileExists(const char *fn);
 bool64 fileExists(const wchar_t *fn);
-// txta + wtxta + ui64a
-void foobar(ui64 i);
+void getFileHandleInfo(const wchar_t *fn, BY_HANDLE_FILE_INFORMATION &bhfi);
+ui64 getFileSize(const wchar_t *fn);
+Time getFileCreationTime(const wchar_t *fn);
+Time getFileAccessTime(const wchar_t *fn);
+Time getFileWriteTime(const wchar_t *fn);
+void setFileTimeFromLocal(const wchar_t *fn, Time t);
+void setFileTimeFromUtc(const wchar_t *fn, Time t);
+// exec
+bool64 execProc(wchar_t *cmd);
+bool64 execProcBlock(wchar_t *cmd);
 // txt + wtxt
 NFND
 TEND
