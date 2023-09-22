@@ -2,13 +2,9 @@
 REM ADD LOOP HERE TO TEST IF 2022 NOT EXIIST TEST 2021 2020 2019 ETC TAKE CURYEAR AND DECREMENT!
 
 set "bat_dir=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
-set "bin_dir=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.34.31933\bin\HostX64\x64"
-
 if not exist "%bat_dir%" echo Failed to find VCVARS64.BAT at "%bat_dir%". Edit 'msvc_build.cmd' with the correct path to your Visual Studio! & pause & exit
 
-if not exist "%bin_dir%" echo Failed to find VCVARS64.BAT at "%bin_dir%". Edit 'msvc_build.cmd' with the correct path to your Visual Studio 'bin' folder! & pause & exit
-
-cmd /c "%bat_dir%"
+call "%bat_dir%"
 set "path=%bin_dir%;%path%"
 
 set "disabled_warns=/wd4530 /wd4710 /wd4711 /wd5045 /wd4626 /wd4625 /wd5026 /wd5027"
@@ -24,7 +20,23 @@ set "disabled_warns=/wd4530 /wd4710 /wd4711 /wd5045 /wd4626 /wd4625 /wd5026 /wd5
 ::C5026 move constructor was implicitly defined as deleted
 ::C5027 move assignment operator was implicitly defined as deleted
 
-set "libs=txt wtxt utf utfcase txtp wtxtp stdp stdr sddb darr time wndint"
+if exist lib\ext\curl (
+	if not exist lib\ext\curl\libcurl_a.lib (
+		cd lib\ext\curl\src\winbuild
+		nmake /f Makefile.vc mode=static RTLIBCFG=static
+		move ..\builds\libcurl-vc-x64-release-static-ipv6-sspi-schannel\lib\libcurl_a.lib ..\..
+	)
+	if not exist lib\ext\curl\libcurl_a_debug.lib (
+		cd lib\ext\curl\src\winbuild
+		nmake /f Makefile.vc mode=static RTLIBCFG=static DEBUG=yes
+		move ..\builds\libcurl-vc-x64-debug-static-ipv6-sspi-schannel\lib\libcurl_a_debug.lib ..\..
+	)
+	
+	if exist ..\builds rmdir /s /q ..\builds
+	cd %~dp0
+)
+
+set "libs=txt wtxt utf utfcase txtp wtxtp stdp stdr sddb darr time wndint ftools"
 set "obj_out_dir=/Folib\"
 
 :build_all_libs_loop

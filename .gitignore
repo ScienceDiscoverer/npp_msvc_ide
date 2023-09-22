@@ -1,6 +1,7 @@
 *.exe
 *.dll
 *.lib
+*.zip
 *.obj
 *.pdb
 *.cod

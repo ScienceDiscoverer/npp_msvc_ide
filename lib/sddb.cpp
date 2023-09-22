@@ -784,7 +784,7 @@ void _dbgSetCleanSelectsHandler()
 	SetConsoleCtrlHandler(dbgCleanSelects, TRUE);
 }
 
-int NOTHROW dbgCleanSelectsOnExit()
+i32 NOTHROW dbgCleanSelectsOnExit()
 {
 	_dbgCleanSelects();
 	return 0;

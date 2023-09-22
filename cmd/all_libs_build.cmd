@@ -1,6 +1,6 @@
 @echo off
 
-set "libs=txt wtxt utf utfcase txtp wtxtp stdp stdr sddb darr time wndint txttst wtxttst ptst"
+set "libs=txt wtxt utf utfcase txtp wtxtp stdp stdr sddb darr time wndint ftools txttst wtxttst ptst"
 
 :parse_loop
 for /f "tokens=1,* delims= " %%a in ("%libs%") do (

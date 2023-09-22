@@ -1,4 +1,18 @@
 // WINAPI
+BOOL ShowWindow(
+  [in] HWND hWnd,
+  [in] int  nCmdShow
+);
+LONG_PTR GetWindowLongPtrA(
+  [in] HWND hWnd,
+  [in] int  nIndex
+);
+BOOL SetFileTime(
+  [in]           HANDLE         hFile,
+  [in, optional] const FILETIME *lpCreationTime,
+  [in, optional] const FILETIME *lpLastAccessTime,
+  [in, optional] const FILETIME *lpLastWriteTime
+);
 BOOLEAN CreateSymbolicLinkA(
   [in] LPCSTR lpSymlinkFileName,
   [in] LPCSTR lpTargetFileName,
@@ -472,6 +486,84 @@ SWP_SHOWWINDOW
 FILE_BEGIN
 FILE_CURRENT
 FILE_END
+GWL_EXSTYLE
+GWLP_HINSTANCE
+GWLP_HWNDPARENT
+GWLP_ID
+GWL_STYLE
+GWLP_USERDATA
+GWLP_WNDPROC
+DWLP_DLGPROC
+DWLP_MSGRESULT
+DWLP_USER
+WS_BORDER
+WS_CAPTION
+WS_CHILD
+WS_CHILDWINDOW
+WS_CLIPCHILDREN
+WS_CLIPSIBLINGS
+WS_DISABLED
+WS_DLGFRAME
+WS_GROUP
+WS_HSCROLL
+WS_ICONIC
+WS_MAXIMIZE
+WS_MAXIMIZEBOX
+WS_MINIMIZE
+WS_MINIMIZEBOX
+WS_OVERLAPPED
+WS_OVERLAPPEDWINDOW
+WS_POPUP
+WS_POPUPWINDOW
+WS_SIZEBOX
+WS_SYSMENU
+WS_TABSTOP
+WS_THICKFRAME
+WS_TILED
+WS_TILEDWINDOW
+WS_VISIBLE
+WS_VSCROLL
+WS_EX_ACCEPTFILES
+WS_EX_APPWINDOW
+WS_EX_CLIENTEDGE
+WS_EX_COMPOSITED
+WS_EX_CONTEXTHELP
+WS_EX_CONTROLPARENT
+WS_EX_DLGMODALFRAME
+WS_EX_LAYERED
+WS_EX_LAYOUTRTL
+WS_EX_LEFT
+WS_EX_LEFTSCROLLBAR
+WS_EX_LTRREADING
+WS_EX_MDICHILD
+WS_EX_NOACTIVATE
+WS_EX_NOINHERITLAYOUT
+WS_EX_NOPARENTNOTIFY
+WS_EX_NOREDIRECTIONBITMAP
+WS_EX_OVERLAPPEDWINDOW
+WS_EX_PALETTEWINDOW
+WS_EX_RIGHT
+WS_EX_RIGHTSCROLLBAR
+WS_EX_RTLREADING
+WS_EX_STATICEDGE
+WS_EX_TOOLWINDOW
+WS_EX_TOPMOST
+WS_EX_TRANSPARENT
+WS_EX_WINDOWEDGE
+SW_HIDE
+SW_SHOWNORMAL
+SW_NORMAL
+SW_SHOWMINIMIZED
+SW_SHOWMAXIMIZED
+SW_MAXIMIZE
+SW_SHOWNOACTIVATE
+SW_SHOW
+SW_MINIMIZE
+SW_SHOWMINNOACTIVE
+SW_SHOWNA
+SW_RESTORE
+SW_SHOWDEFAULT
+SW_FORCEMINIMIZE
 // std c
 void * memset(void *ptr, int value, size_t num);
 void * memcpy(void *destination, const void *source, size_t num);
@@ -695,9 +787,14 @@ ui64 sqrt(ui64 x);
 bool isPrime(ui64 x);
 // wndint
 ATOM initGui(WNDPROC wnd_proc);
+ATOM initGui(WNDPROC wnd_proc, ui64 opts);
 HWND spawnMainWnd(ui64 style, const wchar_t* title, i32 w, i32 h, i32 x, i32 y);
 HWND spawnMainWnd(ui64 style, const wchar_t* title, i32 w, i32 h, ui64 pos);
+HWND spawnWnd(ui64 style, const wchar_t* title, i32 w, i32 h, i32 x, i32 y);
 void enterMsgLoop();
+void enterTranslateMsgLoop();
+LRESULT toggleTopmost();
+LRESULT toggleTopmost(HWND wnd);
 // conint
 void printProgBar(ui64 max, ui64 cur, ui64 x, ui64 y, ui64 len);
 void printProgBarMod(ui64 mod, ui64 max, ui64 cur, ui64 x, ui64 y, ui64 len);
@@ -733,6 +830,8 @@ Time getFileAccessTime(const wchar_t *fn);
 Time getFileWriteTime(const wchar_t *fn);
 void setFileTimeFromLocal(const wchar_t *fn, Time t);
 void setFileTimeFromUtc(const wchar_t *fn, Time t);
+void setCrtModFileTimeFromLocal(const wchar_t *fn, Time t);
+void setCrtModFileTimeFromUtc(const wchar_t *fn, Time t);;
 // exec
 bool64 execProc(wchar_t *cmd);
 bool64 execProcBlock(wchar_t *cmd);
