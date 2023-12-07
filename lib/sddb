@@ -49,9 +49,6 @@
 
 #define EXCEPTION_DARR_OUT_OF_RANGE 	0xE0000011
 #define EXCEPTION_BINF_OUT_OF_RANGE		0xE0000012
-#define EXCEPTION_TXTA_OUT_OF_RANGE		0xE0000013
-#define EXCEPTION_WTXTA_OUT_OF_RANGE	0xE0000014
-#define EXCEPTION_UI64A_OUT_OF_RANGE	0xE0000015
 
 #define EXCEPTION_MATH_MPOW_OVERFLOW	0xE0000100
 
@@ -167,7 +164,7 @@ inline void swPrint(ui64 i)
 		SetConsoleTextAttribute(_dbg_std_out_, col);
 	}
 	
-	p|"SW"|i|D|": "|sw2txt(i)|N;
+	p|"SW"|i|DS|": "|sw2txt(i)|N;
 }
 
 inline void swPrintRaw(ui64 i)

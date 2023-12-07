@@ -23,7 +23,7 @@ set "rc_file_path="
 set "subsys=WINDOWS"
 set "seh=/EHsc"
 set "optim=/O2 /Oi /GL /Gy"
-set "linkopt=/LTCG /INCREMENTAL:NO"
+set "linkopt=/LTCG"
 set "warns=/Wall"
 set "slib="
 set "dlib="
@@ -37,7 +37,7 @@ set "no_launch="
 set "start_up=/ENTRY:wmainCRTStartup"
 set "res_file="
 set "inc_dir=/I D:\P\MT /I res\rc"
-set "lib_dir=/LIBPATH:D:\P\MT\"
+set "lib_dir=/LIBPATH:D:\P\MT\lib"
 cd /d "%2"
 
 errlogkill %2\%name%
@@ -57,7 +57,7 @@ for /f "tokens=1,* delims= " %%a in ("%fline%") do (
 	if "%%a"=="SLIB" set "slib=/c"
 	if "%%a"=="DLIB" set "dlib=/DLL" & set "dll_imp_exp=/NOIMPLIB /NOEXP" & set "debug=/LD" & set "no_launch=no" & set "start_up=/ENTRY:_DllMainCRTStartup"
 	if "%%a"=="DLLIE" set "dll_imp_exp="
-	if "%%a"=="ASM" set "asm=/FAcsu"
+	if "%%a"=="ASM" set "asm=/FAcsu /Facod\"
 	if "%%a"=="DBG" set "debug=/MTd /Z7" & set "debug_link=/DEBUG" & set "debug_def=/D DEBUG" & set "no_def_lib=/NODEFAULTLIB:libcmt.lib"
 	if "%%a"=="NLAUNCH" set "no_launch=no"
 	if "%%a"=="EPMAIN" set "start_up=/ENTRY:mainCRTStartup"
@@ -104,8 +104,10 @@ if "%debug%"=="/MTd /Z7" (
 	if "%dlib%"=="/DLL" set "debug=/LDd /Z7"
 )
 
+if not exist exe mkdir exe
+
 :recompile
-cl %warns% %disabled_warns% /external:anglebrackets /external:W0 /diagnostics:caret /I %2 %optim% %debug_def% /D _%subsys% /D _UNICODE /D UNICODE /D _CRT_SECURE_NO_WARNINGS /Gm- %seh% %debug% /FC /GS- /J /permissive- /nologo %slib% %asm% %inc_dir% %name%.cpp %res_file% /link %dlib% /SUBSYSTEM:%subsys% %linkopt% %debug_link% %lib_dir% %dll_imp_exp% /DYNAMICBASE:NO /MACHINE:X64 %start_up% /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:msvcrtd.lib %no_def_lib% | vcstyle
+cl %warns% %disabled_warns% /Feexe\ /external:anglebrackets /external:W0 /diagnostics:caret /I %2 %optim% %debug_def% /D _%subsys% /D _UNICODE /D UNICODE /D _CRT_SECURE_NO_WARNINGS /Gm- %seh% %debug% /FC /GS- /J /permissive- /nologo %slib% %asm% %inc_dir% %name%.cpp %res_file% /link %dlib% /SUBSYSTEM:%subsys% %linkopt% %debug_link% /INCREMENTAL:NO %lib_dir% %dll_imp_exp% /DYNAMICBASE:NO /MACHINE:X64 %start_up% /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:msvcrtd.lib %no_def_lib% | vcstyle
 
 if %ERRORLEVEL% equ 1 eline2npp & exit
 if %ERRORLEVEL% equ 2 eline2npp
@@ -113,8 +115,8 @@ if %ERRORLEVEL% equ 1 goto :cleanup
 
 ::static lib assemble begin
 if "%slib%"=="/c" ( if "%debug_link%"=="/DEBUG" (
-lib /NOLOGO /VERBOSE /OUT:%name%d.lib %name%.obj ) else (
-lib /NOLOGO /VERBOSE %name%.obj
+lib /NOLOGO /VERBOSE /OUT:lib\%name%d.lib %name%.obj ) else (
+lib /NOLOGO /VERBOSE /OUT:lib\%name%.lib %name%.obj
 set "debug=/MTd /Z7" & set "debug_link=/DEBUG" & set "debug_def=/D DEBUG" & set "no_def_lib=/NODEFAULTLIB:libcmt.lib"
 if "%optim%" neq "/Od" set "optim=/O2 /Oi /Gy" & set "linkopt="
 cls
@@ -123,10 +125,10 @@ goto :recompile )
 if %ERRORLEVEL% neq 0 ( eline2npp & goto :cleanup ) else ( goto :cleanup ) )
 ::static lib assemble end
 
-if "%asm%"=="/FAcsu" notepad++ %name%.cod & goto :cleanup
-if "%debug_link%"=="/DEBUG" ( if "%no_launch%"=="" start sddbg %name%.exe & goto :cleanup )
+if "%asm%"=="/FAcsu /Facod\" notepad++ cod\%name%.cod & goto :cleanup
+if "%debug_link%"=="/DEBUG" ( if "%no_launch%"=="" start sddbg exe\%name%.exe & goto :cleanup )
 
-if "%no_launch%"=="" start "%name%" %name%.exe
+if "%no_launch%"=="" start "%name%" exe\%name%.exe
 :cleanup
 del %name%.obj >nul 2>&1
 del res\%res_name%.rc >nul 2>&1

@@ -68,7 +68,7 @@ set "rc_file_path="
 set "subsys=WINDOWS"
 set "seh=/EHsc"
 set "optim=/O2 /Oi /GL /Gy"
-set "linkopt=/LTCG /INCREMENTAL:NO"
+set "linkopt=/LTCG"
 set "warns=/Wall"
 set "slib="
 set "dlib="
@@ -142,7 +142,7 @@ if "%debug%"=="/MTd /Z7" (
 )
 
 :recompile
-cl %warns% %disabled_warns% /external:anglebrackets /external:W0 /diagnostics:caret /I %~dp0 %optim% %debug_def% /D _%subsys% /D _UNICODE /D UNICODE /D _CRT_SECURE_NO_WARNINGS /Gm- %seh% %debug% /FC /GS- /J /permissive- /nologo %slib% %asm% %inc_dir% %name%.cpp %res_file% %obj_out_dir% /link %dlib% /SUBSYSTEM:%subsys% %linkopt% %debug_link% %lib_dir% %dll_imp_exp% /DYNAMICBASE:NO /MACHINE:X64 %start_up% /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:msvcrtd.lib %no_def_lib%
+cl %warns% %disabled_warns% /external:anglebrackets /external:W0 /diagnostics:caret /I %~dp0 %optim% %debug_def% /D _%subsys% /D _UNICODE /D UNICODE /D _CRT_SECURE_NO_WARNINGS /Gm- %seh% %debug% /FC /GS- /J /permissive- /nologo %slib% %asm% %inc_dir% %name%.cpp %res_file% %obj_out_dir% /link %dlib% /SUBSYSTEM:%subsys% %linkopt% %debug_link% /INCREMENTAL:NO %lib_dir% %dll_imp_exp% /DYNAMICBASE:NO /MACHINE:X64 %start_up% /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:msvcrtd.lib %no_def_lib%
 
 if %ERRORLEVEL% equ 1 pause >nul & exit /b
 if %ERRORLEVEL% equ 2 pause >nul & goto :cleanup

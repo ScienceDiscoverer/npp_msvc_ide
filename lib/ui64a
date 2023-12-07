@@ -2,14 +2,6 @@
 
 #include <darr>
 
-#define EXCEPTION_UI64A_OUT_OF_RANGE 0xE0000015
-
-#ifndef ALL_ASSERT_OFF
-	#define UI64A_ASSERT_RANGE(x) if((x) >= s){RaiseException(EXCEPTION_UI64A_OUT_OF_RANGE, 0, 0, 0);}
-#else
-	#define UI64A_ASSERT_RANGE(x)
-#endif
-
 class ui64a : public darr
 {
 public:
@@ -118,13 +110,13 @@ inline ui64a & ui64a::operator=(ui64a &&o)
 
 inline ui64 & ui64a::operator[](ui64 i)
 {
-	UI64A_ASSERT_RANGE(i)
+	DARR_ASSERT_RANGE(i)
 	return d[i];
 }
 
 inline const ui64 & ui64a::operator[](ui64 i) const
 {
-	UI64A_ASSERT_RANGE(i)
+	DARR_ASSERT_RANGE(i)
 	return d[i];
 }
 
@@ -196,7 +188,7 @@ inline ui64a & ui64a::DelVal(ui64 val)
 
 inline ui64a & ui64a::DelIdx(ui64 i)
 {
-	UI64A_ASSERT_RANGE(i)
+	DARR_ASSERT_RANGE(i)
 	ui64 *pos = d + i;
 	memmove(pos, pos + 1, (s - i - 1) * sizeof(ui64));
 	--s;

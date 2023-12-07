@@ -10,6 +10,17 @@
 	#pragma comment( lib, "time" )
 #endif
 
+struct Time {
+	ui16 y;
+	ui16 m;
+	ui16 dw;
+	ui16 d;
+	ui16 hrs;
+	ui16 min;
+	ui16 sec;
+	ui16 ms;
+};
+
 extern ui64 sw_ns_per_tick;
 
 txt ticks2txt(ui64 timing);
@@ -37,6 +48,164 @@ inline txt swTime(ui64 i)
 inline wtxt swTimeW(ui64 i)
 {
 	return ticks2wtxt(swt_ed[i] - swt_st[i]);
+}
+
+inline void utcToLoc(Time &utc)
+{
+	SYSTEMTIME loc;
+	SystemTimeToTzSpecificLocalTime(NULL, (SYSTEMTIME *)&utc, &loc);
+	((ui64 *)&utc)[0] = ((ui64 *)&loc)[0]; // Faster than mcpy, less overhead
+	((ui64 *)&utc)[1] = ((ui64 *)&loc)[1];
+}
+
+inline void locToUtc(Time &loc)
+{
+	SYSTEMTIME utc;
+	TzSpecificLocalTimeToSystemTime(NULL, (SYSTEMTIME *)&loc, &utc);
+	((ui64 *)&loc)[0] = ((ui64 *)&utc)[0];
+	((ui64 *)&loc)[1] = ((ui64 *)&utc)[1];
+}
+
+inline Time & t2dt(const txt &tt, Time &t) // Format [YYYY.MM.DD-HH:MM:SS] [.-:] - can be any symbol
+{
+	i64 n = tt[0] & 0xF;
+	n = n * 10 + (tt[1] & 0xF);
+	n = n * 10 + (tt[2] & 0xF);
+	n = n * 10 + (tt[3] & 0xF);
+	t.y = (ui16)n;
+	
+	n = tt[5] & 0xF;
+	n = n * 10 + (tt[6] & 0xF);
+	t.m = (ui16)n;
+	
+	n = tt[8] & 0xF;
+	n = n * 10 + (tt[9] & 0xF);
+	t.d = (ui16)n;
+	
+	n = tt[11] & 0xF;
+	n = n * 10 + (tt[12] & 0xF);
+	t.hrs = (ui16)n;
+	
+	n = tt[14] & 0xF;
+	n = n * 10 + (tt[15] & 0xF);
+	t.min = (ui16)n;
+	
+	n = tt[17] & 0xF;
+	n = n * 10 + (tt[18] & 0xF);
+	t.sec = (ui16)n;
+	
+	return t;
+} // TODO ADD EXCEPTION FOR NON-DATE?
+
+inline Time & t2dt(const wtxt &tt, Time &t)
+{
+	i64 n = tt[0] & 0xF;
+	n = n * 10 + (tt[1] & 0xF);
+	n = n * 10 + (tt[2] & 0xF);
+	n = n * 10 + (tt[3] & 0xF);
+	t.y = (ui16)n;
+	
+	n = tt[5] & 0xF;
+	n = n * 10 + (tt[6] & 0xF);
+	t.m = (ui16)n;
+	
+	n = tt[8] & 0xF;
+	n = n * 10 + (tt[9] & 0xF);
+	t.d = (ui16)n;
+	
+	n = tt[11] & 0xF;
+	n = n * 10 + (tt[12] & 0xF);
+	t.hrs = (ui16)n;
+	
+	n = tt[14] & 0xF;
+	n = n * 10 + (tt[15] & 0xF);
+	t.min = (ui16)n;
+	
+	n = tt[17] & 0xF;
+	n = n * 10 + (tt[18] & 0xF);
+	t.sec = (ui16)n;
+	
+	return t;
+}
+
+inline txt & dt2t(const Time &t, txt &tt)
+{
+	// xxxx_xx_xx-xx_xx_xx - Note: [_-] chars are provided by the calling code and can by anything
+	
+	ui64 x = t.y;
+	tt[3] = (char)(x % 10 | 0x30);
+	x /= 10;
+	tt[2] = (char)(x % 10 | 0x30);
+	x /= 10;
+	tt[1] = (char)(x % 10 | 0x30);
+	x /= 10;
+	tt[0] = (char)(x % 10 | 0x30);
+	
+	x = t.m;
+	tt[6] = (char)(x % 10 | 0x30);
+	x /= 10;
+	tt[5] = (char)(x % 10 | 0x30);
+	
+	x = t.d;
+	tt[9] = (char)(x % 10 | 0x30);
+	x /= 10;
+	tt[8] = (char)(x % 10 | 0x30);
+	
+	x = t.hrs;
+	tt[12] = (char)(x % 10 | 0x30);
+	x /= 10;
+	tt[11] = (char)(x % 10 | 0x30);
+	
+	x = t.min;
+	tt[15] = (char)(x % 10 | 0x30);
+	x /= 10;
+	tt[14] = (char)(x % 10 | 0x30);
+	
+	x = t.sec;
+	tt[18] = (char)(x % 10 | 0x30);
+	x /= 10;
+	tt[17] = (char)(x % 10 | 0x30);
+	
+	return tt;
+}
+
+inline wtxt & dt2t(const Time &t, wtxt &tt)
+{
+	ui64 x = t.y;
+	tt[3] = (wchar_t)(x % 10 | 0x30);
+	x /= 10;
+	tt[2] = (wchar_t)(x % 10 | 0x30);
+	x /= 10;
+	tt[1] = (wchar_t)(x % 10 | 0x30);
+	x /= 10;
+	tt[0] = (wchar_t)(x % 10 | 0x30);
+	
+	x = t.m;
+	tt[6] = (wchar_t)(x % 10 | 0x30);
+	x /= 10;
+	tt[5] = (wchar_t)(x % 10 | 0x30);
+	
+	x = t.d;
+	tt[9] = (wchar_t)(x % 10 | 0x30);
+	x /= 10;
+	tt[8] = (wchar_t)(x % 10 | 0x30);
+	
+	x = t.hrs;
+	tt[12] = (wchar_t)(x % 10 | 0x30);
+	x /= 10;
+	tt[11] = (wchar_t)(x % 10 | 0x30);
+	
+	x = t.min;
+	tt[15] = (wchar_t)(x % 10 | 0x30);
+	x /= 10;
+	tt[14] = (wchar_t)(x % 10 | 0x30);
+	
+	x = t.sec;
+	tt[18] = (wchar_t)(x % 10 | 0x30);
+	x /= 10;
+	tt[17] = (wchar_t)(x % 10 | 0x30);
+	
+	return tt;
 }
 
 

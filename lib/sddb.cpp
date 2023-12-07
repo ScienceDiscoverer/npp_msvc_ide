@@ -179,8 +179,8 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 	
 	DWORD c = er->ExceptionCode;
 	
-	p|R|"<---"|D|N;
-	p|"--------------------------------------------------------------------"|R|N;
+	p|R|"<---"|N;
+	p|"--------------------------------------------------------------------"|RS|N;
 	switch(c)
 	{
 	case STILL_ACTIVE:
@@ -256,7 +256,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 		{
 			p|"DEP "; // Data Execution Prevention
 		}
-		p|"IN_PAGE_ERROR"|D|N;
+		p|"IN_PAGE_ERROR"|DS|N;
 		p|"DATA VADDRESS:       "|er->ExceptionInformation[1]|N;
 		p|"NTSTATUS CAUSE:      "|er->ExceptionInformation[2]|N;
 		break;
@@ -290,7 +290,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 	case EXCEPTION_CPP_LOWERCASE:
 	case EXCEPTION_CPP_UPPERCASE:
 	{
-		p|"CPP_EXCEPTION"|D|N;
+		p|"CPP_EXCEPTION"|DS|N;
 		p|"PARAMS NUM: "|er->NumberParameters|N;
 		for(ui64 i = 0; i < er->NumberParameters; ++i)
 		{
@@ -352,7 +352,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 	// CUSTOM EXCEPTIONS ----------------------------------------------------------------------------
 	case EXCEPTION_TXT_BUFF_OVERRUN:
 	{
-		p|"EXCEPTION_TXT_BUFF_OVERRUN"|D|N;
+		p|"EXCEPTION_TXT_BUFF_OVERRUN"|DS|N;
 		
 		void *buff = NULL;
 		if(er->ExceptionInformation[1] == EXCEPT_TXT_UTF8)
@@ -374,7 +374,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 			ReadProcessMemory(proc, (LPCVOID)er->ExceptionInformation[0], buff, s, NULL);
 			char * char_buff = (char *)buff;
 			char_buff[s-1] = 0;
-			p|"   "|V|I|Y|"TEXT"|V|I|D|": "|V|I|D|char_buff|V|I|D;
+			p|"   "|V|I|Y|"TEXT"|V|I|": "|V|I|char_buff|V|I;
 			if(size_trunced)
 			{
 				p|"...... "|s_orig - s|" CHARACTERS TRUNCATED ......";
@@ -402,7 +402,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 			wchar_t * wchar_buff = (wchar_t *)buff;
 			wchar_buff[s-1] = 0;
 			
-			p|"   "|V|I|Y|"TEXT"|V|I|D|": "|V|I|D|wchar_buff|V|I|D;
+			p|"   "|V|I|Y|"TEXT"|V|I|": "|V|I|wchar_buff|V|I;
 			if(size_trunced)
 			{
 				p|"...... "|s_orig - s|" CHARACTERS TRUNCATED ......";
@@ -411,8 +411,8 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 		}
 		HeapFree(heap, 0, buff);
 		
-		p|Y|"TEXT SIZE: "|YD|er->ExceptionInformation[2]|D|N;
-		p|Y|" POSITION: "|YD|er->ExceptionInformation[3]|D|N;
+		p|Y|"TEXT SIZE: "|YD|er->ExceptionInformation[2]|N;
+		p|Y|" POSITION: "|YD|er->ExceptionInformation[3]|N;
 	}	break;
 	case EXCEPTION_T2I_NON_NUMBER:
 	case EXCEPTION_H2I_NON_NUMBER:
@@ -436,7 +436,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 			p|"EXCEPTION_H2I_OVERFLOW";
 		}
 		
-		p|D|N;
+		p|DS|N;
 		
 		void *buff = NULL;
 		if(er->ExceptionInformation[1] == EXCEPT_TXT_UTF8)
@@ -444,7 +444,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 			SIZE_T s = er->ExceptionInformation[2] + 1;
 			buff = HeapAlloc(heap, 0, s);
 			ReadProcessMemory(proc, (LPCVOID)er->ExceptionInformation[0], buff, s, NULL);
-			p|V|I|Y|"TEXT"|V|I|D|": "|V|I|D|(const char *)buff|V|I|D|N;
+			p|V|I|Y|"TEXT"|V|I|": "|V|I|(const char *)buff|V|I|N;
 		}
 		else
 		{
@@ -462,18 +462,18 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 				}
 			}
 			
-			p|V|I|Y|"TEXT"|V|I|D|": "|V|I|D|(const wchar_t *)buff|V|I|D|N;
+			p|V|I|Y|"TEXT"|V|I|": "|V|I|(const wchar_t *)buff|V|I|N;
 		}
 		HeapFree(heap, 0, buff);
 	}	break;
 	case EXCEPTION_TXTDP_P1_LESS_P0:
-		p|"EXCEPTION_TXTDP_P1_LESS_P0"|D|N;
+		p|"EXCEPTION_TXTDP_P1_LESS_P0"|DS|N;
 		goto p1_less_then_p0_pos_display;
 	case EXCEPTION_TXTSP_P1_LESS_P0:
-		p|"EXCEPTION_TXTSP_P1_LESS_P0"|D|N;
+		p|"EXCEPTION_TXTSP_P1_LESS_P0"|DS|N;
 		goto p1_less_then_p0_pos_display;
 	case EXCEPTION_TXTRP_P1_LESS_P0:
-		p|"EXCEPTION_TXTRP_P1_LESS_P0"|D|N;
+		p|"EXCEPTION_TXTRP_P1_LESS_P0"|DS|N;
 	p1_less_then_p0_pos_display:
 		p|"POSITION 0: "|er->ExceptionInformation[0]|N;
 		p|"POSITION 1: "|er->ExceptionInformation[1]|N;
@@ -484,27 +484,18 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 	case EXCEPTION_BINF_OUT_OF_RANGE:
 		p|"EXCEPTION_BINF_OUT_OF_RANGE"|N;
 		break;
-	case EXCEPTION_TXTA_OUT_OF_RANGE:
-		p|"EXCEPTION_TXTA_OUT_OF_RANGE"|N;
-		break;
-	case EXCEPTION_WTXTA_OUT_OF_RANGE:
-		p|"EXCEPTION_WTXTA_OUT_OF_RANGE"|N;
-		break;
-	case EXCEPTION_UI64A_OUT_OF_RANGE:
-		p|"EXCEPTION_UI64A_OUT_OF_RANGE"|N;
-		break;
 	case EXCEPTION_ASSERT_FAIL:
-		p|"EXCEPTION_ASSERT_FAIL "|D|"AT LINE "|C|er->ExceptionInformation[0]|R|N;
+		p|"EXCEPTION_ASSERT_FAIL "|DS|"AT LINE "|C|er->ExceptionInformation[0]|R|N;
 		break;
 	case EXCEPTION_MATH_MPOW_OVERFLOW:
 		p|"EXCEPTION_MATH_MPOW_OVERFLOW"|N;
 		break;
 	default:
-		p|"UNKNOWN_EXCEPTION ["|H|c|"]"|N;
+		p|"UNKNOWN_EXCEPTION "|DS|'['|H|c|']'|N;
 		break;
 	}
 	
-	p|D|"CONTINUE EXECUTION:  ";
+	p|DS|"CONTINUE EXECUTION:  ";
 	if(er->ExceptionFlags == EXCEPTION_NONCONTINUABLE)
 	{
 		p|R|"NOT ";
@@ -514,7 +505,7 @@ void pexcept(_EXCEPTION_RECORD *er, HANDLE proc)
 		p|G;
 	}
 	
-	p|"POSSIBLE"|D|N;
+	p|"POSSIBLE"|DS|N;
 	
 	p|"INSTRUCTION ADDRESS: 0x"|H|er->ExceptionAddress|N;
 		
@@ -537,9 +528,9 @@ int efilter(_EXCEPTION_POINTERS *ep)
 {
 	p|DC;
 	pexcept(ep->ExceptionRecord, NULL);
-	p|G|"C"|D|"ONTINUE | ";
-	p|C|"H"|D|"ANDLE | ";
-	p|R|"I"|D|"GNORE";
+	p|G|"C"|"ONTINUE | ";
+	p|C|"H"|"ANDLE | ";
+	p|R|"I"|"GNORE";
 	//p|"C ----> TRY TO EXECUTIE FAULTY INSTRUCTION AGAIN"|N;
 	//p|"H ----> ABORT TRY BLOCK AND EXECUTE HANDLER, CONTINUE AFTER THE BLOCK"|N;
 	//p|"I ----> IGNORE EXCEPTION AND PASS IT TO OTHER\\DEFAULT HANDLER"|N;
@@ -629,7 +620,7 @@ void swDiff(ui64 i_left, ui64 i_right)
 	tp|(ui64)perc|".";
 	tp|SP(2)|SPC('0')|ui64(perc * 100.0f - float((ui64)perc) * 100.0f);
 	
-	p|TAC|(timing_l > timing_r ? G : R)|*tp|D;
+	p|TAC|(timing_l > timing_r ? G : R)|*tp;
 }
 
 HANDLE _dbg_std_in_ = GetStdHandle(STD_INPUT_HANDLE);

@@ -3,14 +3,6 @@
 #include <darr>
 #include <txt>
 
-#define EXCEPTION_TXTA_OUT_OF_RANGE 0xE0000013
-
-#ifndef ALL_ASSERT_OFF
-	#define TXTA_ASSERT_RANGE(x) if((x) >= s){RaiseException(EXCEPTION_TXTA_OUT_OF_RANGE, 0, 0, 0);}
-#else
-	#define TXTA_ASSERT_RANGE(x)
-#endif
-
 // TODO ADD APPENDIN FUNC THAT WILL SORT NEW ENTRIEZ AUTOMATICALLY
 // TODO ADD SORT FUNCS
 // TODO ADD CSTR ARRAYS CONSTRUCTORS, MUCH MUCH FASTER CONSTRUCTION, TO WTXTA TOO
@@ -179,13 +171,13 @@ inline txta & txta::operator=(txta &&o)
 
 inline txt & txta::operator[](ui64 i)
 {
-	TXTA_ASSERT_RANGE(i)
+	DARR_ASSERT_RANGE(i)
 	return d[i];
 }
 
 inline const txt & txta::operator[](ui64 i) const
 {
-	TXTA_ASSERT_RANGE(i)
+	DARR_ASSERT_RANGE(i)
 	return d[i];
 }
 

@@ -257,7 +257,7 @@ StdPrinter & TE(StdPrinter &stdp)
 		p|N;
 	}
 	
-	p|D;
+	p|DS;
 	prev_row = 0;
 	col_i = 0;
 	t.Clear();

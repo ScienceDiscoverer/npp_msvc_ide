@@ -16,20 +16,20 @@
 // to signal the debugger to handle the exception. But why, if I can use RaiseException?!
 // REASON: //KERNELBASE.dll!RaiseException+0x69 VS KERNELBASE.dll!DebugBreak+0x3 --> many useless code in RaiseExc!
 
-#define COL_END				p|D;
+#define COL_END				p|DS;
 	
-#define COL_THREAD			p|C;
-#define COL_DLL				p|V;
-#define COL_PROC			p|B;
-#define COL_STR				p|Y;
-#define COL_DESPAWN			p|R;
-#define COL_LOAD_SUCC		p|G;
-#define COL_LOAD_FAIL		p|R;
+#define COL_THREAD			p|CS;
+#define COL_DLL				p|VS;
+#define COL_PROC			p|BS;
+#define COL_STR				p|YS;
+#define COL_DESPAWN			p|RS;
+#define COL_LOAD_SUCC		p|GS;
+#define COL_LOAD_FAIL		p|RS;
 
-#define COL_TRACE_PLUS		p|V;
-#define COL_TRACE_OFFSET	p|B;
-#define COL_TRACE_SYMB		p|Y;
-#define COL_TRACE_LINE		p|C;
+#define COL_TRACE_PLUS		p|VS;
+#define COL_TRACE_OFFSET	p|BS;
+#define COL_TRACE_SYMB		p|YS;
+#define COL_TRACE_LINE		p|CS;
 
 cstr vc_source = L(
 	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.34.31933\\crt\\src\\vcruntime\\");
@@ -80,7 +80,7 @@ engage_inject_mode:
 	
 	if(argc != 2)
 	{
-		p|"Move "|G|"MOUSE POINTER"|D|" over process "|B|"WINDOW"|D|" to be attached and press "|Y|"ANY KEY"|D|"..."|P;
+		p|"Move "|G|"MOUSE POINTER"|" over process "|B|"WINDOW"|" to be attached and press "|Y|"ANY KEY"|"..."|P;
 		
 		POINT pnt;
 		GetCursorPos(&pnt);
@@ -226,7 +226,7 @@ engage_inject_mode:
 			if(!res)
 			{
 				p|PE|N;
-				p|R|"GETTHREADCONTEXT FAILED!"|D|N;
+				p|R|"GETTHREADCONTEXT FAILED!"|N;
 			}
 			
 			p|"RIP  0x"|H|cx.Rip|"  RSP  0x"|H|cx.Rsp|N;
@@ -664,16 +664,16 @@ DWORD decision(DWORD chance)
 	static HANDLE ih = GetStdHandle(STD_INPUT_HANDLE);
 	static HANDLE oh = GetStdHandle(STD_OUTPUT_HANDLE);
 	
-	p|DC|C|"H"|D|"ANDLE | ";
-	p|G|"I"|D|"GNORE [";
+	p|DC|C|"H"|"ANDLE | ";
+	p|G|"I"|"GNORE [";
 	
 	if(chance)
 	{
-		p|G|"FIRST CHANCE"|D;
+		p|G|"FIRST CHANCE";
 	}
 	else
 	{
-		p|R|"FINAL CHANCE"|D;
+		p|R|"FINAL CHANCE";
 	}
 	
 	p|']'|N;

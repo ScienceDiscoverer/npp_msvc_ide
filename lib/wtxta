@@ -3,14 +3,6 @@
 #include <darr>
 #include <wtxt>
 
-#define EXCEPTION_WTXTA_OUT_OF_RANGE 0xE0000014
-
-#ifndef ALL_ASSERT_OFF
-	#define WTXTA_ASSERT_RANGE(x) if((x) >= s){RaiseException(EXCEPTION_WTXTA_OUT_OF_RANGE, 0, 0, 0);}
-#else
-	#define WTXTA_ASSERT_RANGE(x)
-#endif
-
 class wtxta : public darr
 {
 public:
@@ -18,8 +10,8 @@ public:
 	wtxta(ui64 init_size);					// Initial allocation size
 	wtxta(const wchar_t **wcstra);			// Empty string terminated const string array
 	wtxta(const wchar_t **wcstra, ui64 sz);	// Known length const string array
-	wtxta(const cwstr *cwsa);						// Empty cwstr array
-	wtxta(const cwstr *cwsa, ui64 sz);			// Known length cwstr array
+	wtxta(const cwstr *cwsa);				// Empty cwstr array
+	wtxta(const cwstr *cwsa, ui64 sz);		// Known length cwstr array
 	wtxta(const wtxt *wctxta);				// Empty string terminated const texts array
 	wtxta(const wtxt *wctxta, ui64 sz);		// Known length const texts array
 	wtxta(const wtxta &o);
@@ -275,13 +267,13 @@ inline wtxta & wtxta::operator=(wtxta &&o)
 
 inline wtxt & wtxta::operator[](ui64 i)
 {
-	WTXTA_ASSERT_RANGE(i)
+	DARR_ASSERT_RANGE(i)
 	return d[i];
 }
 
 inline const wtxt & wtxta::operator[](ui64 i) const
 {
-	WTXTA_ASSERT_RANGE(i)
+	DARR_ASSERT_RANGE(i)
 	return d[i];
 }
 

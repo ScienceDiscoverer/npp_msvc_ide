@@ -1,4 +1,10 @@
 // WINAPI
+BOOL RegisterHotKey(
+  [in, optional] HWND hWnd,
+  [in]           int  id,
+  [in]           UINT fsModifiers,
+  [in]           UINT vk
+);
 BOOL ShowWindow(
   [in] HWND hWnd,
   [in] int  nCmdShow
@@ -103,6 +109,9 @@ DWORD GetWindowThreadProcessId(
   [in]            HWND    hWnd,
   [out, optional] LPDWORD lpdwProcessId
 );
+void GetSystemTime(
+  [out] LPSYSTEMTIME lpSystemTime
+);
 void GetLocalTime(
   [out] LPSYSTEMTIME lpSystemTime
 );
@@ -111,6 +120,14 @@ DWORD GetFileAttributesA(
 );
 DWORD GetFileAttributesW(
   [in] LPCWSTR lpFileName
+);
+BOOL SetFileAttributesA(
+  [in] LPCSTR lpFileName,
+  [in] DWORD  dwFileAttributes
+);
+BOOL SetFileAttributesW(
+  [in] LPCWSTR lpFileName,
+  [in] DWORD   dwFileAttributes
 );
 BOOL GetFileTime(
   [in]            HANDLE     hFile,
@@ -271,9 +288,9 @@ BOOL CopyFile(
   [in] LPCTSTR lpNewFileName,
   [in] BOOL    bFailIfExists
 );
-BOOL CopyFileExA(
-  [in]           LPCSTR             lpExistingFileName,
-  [in]           LPCSTR             lpNewFileName,
+BOOL CopyFileExW(
+  [in]           LPCWSTR            lpExistingFileName,
+  [in]           LPCWSTR            lpNewFileName,
   [in, optional] LPPROGRESS_ROUTINE lpProgressRoutine,
   [in, optional] LPVOID             lpData,
   [in, optional] LPBOOL             pbCancel,
@@ -458,6 +475,18 @@ VK_RMENU
 VK_ESCAPE
 VK_END
 VK_HOME
+VK_F1
+VK_F2
+VK_F3
+VK_F4
+VK_F5
+VK_F6
+VK_F7
+VK_F8
+VK_F9
+VK_F10
+VK_F11
+VK_F12
 MK_CONTROL
 MK_LBUTTON
 MK_MBUTTON
@@ -564,6 +593,23 @@ SW_SHOWNA
 SW_RESTORE
 SW_SHOWDEFAULT
 SW_FORCEMINIMIZE
+CREATE_BREAKAWAY_FROM_JOB
+CREATE_DEFAULT_ERROR_MODE
+CREATE_NEW_CONSOLE
+CREATE_NEW_PROCESS_GROUP
+CREATE_NO_WINDOW
+CREATE_PROTECTED_PROCESS
+CREATE_PRESERVE_CODE_AUTHZ_LEVEL
+CREATE_SECURE_PROCESS
+CREATE_SEPARATE_WOW_VDM
+CREATE_SHARED_WOW_VDM
+CREATE_SUSPENDED
+CREATE_UNICODE_ENVIRONMENT
+DEBUG_ONLY_THIS_PROCESS
+DEBUG_PROCESS
+DETACHED_PROCESS
+EXTENDED_STARTUPINFO_PRESENT
+INHERIT_PARENT_AFFINITY
 // std c
 void * memset(void *ptr, int value, size_t num);
 void * memcpy(void *destination, const void *source, size_t num);
@@ -596,21 +642,21 @@ wtxt & utfTxtToUp(wtxt &t);
 txt & txtd(txt &t, ui64 pos, ui64 n);
 wtxt & txtd(wtxt &t, ui64 pos, ui64 n);
 txt & txti(txt &t, ui64 pos, char ins);
-txt & txti(txt &t, ui64 pos, const char *ins);
+txt & txti(txt &t, ui64 pos, cstr ins);
 txt & txti(txt &t, ui64 pos, const txt &ins);
-wtxt & txti(wtxt &t, ui64 pos, const wchar_t *ins);
+wtxt & txti(wtxt &t, ui64 pos, cwstr ins);
 wtxt & txti(wtxt &t, ui64 pos, const wtxt &ins);
 wtxt & txti(wtxt &t, ui64 pos, wchar_t ins);
 txt & txto(txt &t, ui64 pos, char ovr);
-txt & txto(txt &t, ui64 pos, const char *ovr);
+txt & txto(txt &t, ui64 pos, cstr ovr);
 txt & txto(txt &t, ui64 pos, const txt &ovr);
-wtxt & txto(wtxt &t, ui64 pos, const wchar_t *ovr);
+wtxt & txto(wtxt &t, ui64 pos, cwstr ovr);
 wtxt & txto(wtxt &t, ui64 pos, const wtxt &ovr);
 wtxt & txto(wtxt &t, ui64 pos, wchar_t ovr);
 txt & txtr(txt &t, ui64 pos, ui64 n, char rep);
-txt & txtr(txt &t, ui64 pos, ui64 n, const char *rep);
+txt & txtr(txt &t, ui64 pos, ui64 n, cstr rep);
 txt & txtr(txt &t, ui64 pos, ui64 n, const txt &rep);
-wtxt & txtr(wtxt &t, ui64 pos, ui64 n, const wchar_t *rep);
+wtxt & txtr(wtxt &t, ui64 pos, ui64 n, cwstr rep);
 wtxt & txtr(wtxt &t, ui64 pos, ui64 n, const wtxt &rep);
 wtxt & txtr(wtxt &t, ui64 pos, ui64 n, wchar_t rep);
 txt i2h(ui16 i);
@@ -628,6 +674,20 @@ txt i2b(ui64 i);
 txt i2b(ui32 i);
 txt i2b(ui16 i);
 txt b2b(ui8 b);
+txt & i2t(ui64 i, txt &res);
+txt & i2t(ui32 i, txt &res);
+txt & i2t(i64 i, txt &res);
+txt & i2t(i32 i, txt &res);
+txt & b2t(ui8 b, txt &res);
+txt & b2t(i8 b, txt &res);
+txt & i2h(ui64 i, txt &res);
+txt & i2h(ui32 i, txt &res);
+txt & i2h(ui16 i, txt &res);
+txt & b2h(ui8 b, txt &res);
+txt & i2b(ui64 i, txt &res);
+txt & i2b(ui32 i, txt &res);
+txt & i2b(ui16 i, txt &res);
+txt & b2b(ui8 b, txt &res);
 txt txts(const txt &t, ui64 pos, ui64 n);
 wtxt txts(const wtxt &t, ui64 pos, ui64 n);
 txt txtsp(const txt &t, ui64 p0, ui64 p1);
@@ -637,21 +697,21 @@ ui64 h2i(const wtxt &t);
 ui64 t2i(const txt &t);
 ui64 t2i(const wtxt &t);
 ui64 txtf(const txt &t, ui64 pos, char fnd);
-ui64 txtf(const txt &t, ui64 pos, const char *fnd);
+ui64 txtf(const txt &t, ui64 pos, cstr fnd);
 ui64 txtf(const txt &t, ui64 pos, const txt &fnd);
-ui64 txtf(const wtxt &t, ui64 pos, const wchar_t *fnd);
+ui64 txtf(const wtxt &t, ui64 pos, cwstr fnd);
 ui64 txtf(const wtxt &t, ui64 pos, const wtxt &fnd);
 ui64 txtf(const wtxt &t, ui64 pos, wchar_t fnd);
 ui64 txtfe(const txt &t, ui64 pos, char fnd);
-ui64 txtfe(const txt &t, ui64 pos, const char *fnd);
+ui64 txtfe(const txt &t, ui64 pos, cstr fnd);
 ui64 txtfe(const txt &t, ui64 pos, const txt &fnd);
-ui64 txtfe(const wtxt &t, ui64 pos, const wchar_t *fnd);
+ui64 txtfe(const wtxt &t, ui64 pos, cwstr fnd);
 ui64 txtfe(const wtxt &t, ui64 pos, const wtxt &fnd);
 ui64 txtfe(const wtxt &t, ui64 pos, wchar_t fnd);
 ui64 txtfr(const txt &t, ui64 p0, ui64 p1, char fnd);
-ui64 txtfr(const txt &t, ui64 p0, ui64 p1, const char *fnd);
+ui64 txtfr(const txt &t, ui64 p0, ui64 p1, cstr fnd);
 ui64 txtfr(const txt &t, ui64 p0, ui64 p1, const txt &fnd);
-ui64 txtfr(const wtxt &t, ui64 p0, ui64 p1, const wchar_t *fnd);
+ui64 txtfr(const wtxt &t, ui64 p0, ui64 p1, cwstr fnd);
 ui64 txtfr(const wtxt &t, ui64 p0, ui64 p1, const wtxt &fnd);
 ui64 txtfr(const wtxt &t, ui64 p0, ui64 p1, wchar_t fnd);
 wtxt i2wh(ui16 i);
@@ -669,14 +729,27 @@ wtxt i2wb(ui64 i);
 wtxt i2wb(ui32 i);
 wtxt i2wb(ui16 i);
 wtxt b2wb(ui8 b);
+wtxt & i2t(ui64 i, wtxt &res);
+wtxt & i2t(ui32 i, wtxt &res);
+wtxt & i2t(i64 i, wtxt &res);
+wtxt & i2t(i32 i, wtxt &res);
+wtxt & b2t(ui8 b, wtxt &res);
+wtxt & b2t(i8 b, wtxt &res);
+wtxt & i2h(ui64 i, wtxt &res);
+wtxt & i2h(ui32 i, wtxt &res);
+wtxt & i2h(ui16 i, wtxt &res);
+wtxt & b2h(ui8 b, wtxt &res);
+wtxt & i2b(ui64 i, wtxt &res);
+wtxt & i2b(ui32 i, wtxt &res);
+wtxt & i2b(ui16 i, wtxt &res);
 txt & txtssz(txt &t, ui64 sz);
 txt & txtsdt(txt &t, ui64 ts, ui64 s, char *td);
 txt & txtclr(txt &t);
 txt & txtz(txt &t);
 txt & txtinv(txt &t);
 txt & txtfree(txt &t);
-txt & txtadd(txt &t, const char *d, ui64 sz);
-wtxt & txtadd(wtxt &t, const wchar_t *d, ui64 sz);
+txt & txtadd(txt &t, cstr d, ui64 sz);
+wtxt & txtadd(wtxt &t, cwstr d, ui64 sz);
 wtxt & txtssz(wtxt &t, ui64 sz);
 wtxt & txtsdt(wtxt &t, ui64 ts, ui64 s, wchar_t *td);
 wtxt & txtclr(wtxt &t);
@@ -694,15 +767,15 @@ char c2up(char c);
 wchar_t c2low(wchar_t c);
 wchar_t c2up(wchar_t c);
 ui64 txtfci(const txt &t, ui64 pos, const txt &fnd);
-ui64 txtfci(const txt &t, ui64 pos, const char *fnd);
+ui64 txtfci(const txt &t, ui64 pos, cstr fnd);
 ui64 txtfci(const txt &t, ui64 pos, char fnd);
 ui64 txtfci(const wtxt &t, ui64 pos, const wtxt &fnd);
-ui64 txtfci(const wtxt &t, ui64 pos, const wchar_t *fnd);
+ui64 txtfci(const wtxt &t, ui64 pos, cwstr fnd);
 ui64 txtfci(const wtxt &t, ui64 pos, wchar_t fnd);
 ui64 txtfa(const txt &t, ui64 pos, const txt &chars);
-ui64 txtfa(const txt &t, ui64 pos, const char *chars, ui64 charss);
+ui64 txtfa(const txt &t, ui64 pos, cstr chars, ui64 charss);
 ui64 txtfa(const wtxt &t, ui64 pos, const wtxt &chars);
-ui64 txtfa(const wtxt &t, ui64 pos, const wchar_t *chars, ui64 charss);
+ui64 txtfa(const wtxt &t, ui64 pos, cwstr chars, ui64 charss);
 bool64 txtseq(const txt &t, ui64 pos, const txt &sub);
 bool64 txtsneq(const txt &t, ui64 pos, const txt &sub);
 bool64 txtseq(const txt &t, ui64 pos, cstr sub);
@@ -805,6 +878,12 @@ void swSet(ui64 i);
 void swStop(ui64 i);
 txt swTime(ui64 i);
 wtxt swTimeW(ui64 i);
+void utcToLoc(Time &utc);
+void locToUtc(Time &loc);
+Time & t2dt(const txt &tt, Time &t);
+Time & t2dt(const wtxt &tt, Time &t);
+txt & dt2t(const Time &t, txt &tt);
+wtxt & dt2t(const Time &t, wtxt &tt);
 // fnmanip.h
 txt fishOutFileExt(const txt &fn);
 txt & fishOutFileExt(const txt &fn, txt &ext);
@@ -817,24 +896,34 @@ wtxt & nameFromPath(const wtxt &path, wtxt &n);
 // txta + wtxta + ui64a
 wtxta & Print();
 // ftools
+void scan(const wtxt &dir, wtxta &list);
+void scanIgn(const wtxt &dir, wtxta &list);
+void scan(const wtxt &dir, wtxta &list, const cwstr *ext, ui64 exts);
+void scanIgn(const wtxt &dir, wtxta &list, const cwstr *ext, ui64 exts);
+void scanCurDir(wtxta &list);
 ui64 getFileList(const cwstr *dirs, wtxta &list);
+ui64 getFileList(const cwstr &dir, wtxta &list);
 ui64 getFileList(const cwstr *dirs, const cwstr *idirs, wtxta &list);
 ui64 getFileList(const cwstr *dirs, const cwstr *ext, ui64 exts, wtxta &list);
 ui64 getFileList(const cwstr *dirs, const cwstr *idirs, const cwstr *ext, ui64 exts, wtxta &list);
 bool64 fileExists(const char *fn);
 bool64 fileExists(const wchar_t *fn);
 void getFileHandleInfo(const wchar_t *fn, BY_HANDLE_FILE_INFORMATION &bhfi);
+void getFileHandleInfoReparse(const wchar_t *fn, BY_HANDLE_FILE_INFORMATION &bhfi);
 ui64 getFileSize(const wchar_t *fn);
+void copyFileTime(const wchar_t *from, const wchar_t *into);
 Time getFileCreationTime(const wchar_t *fn);
-Time getFileAccessTime(const wchar_t *fn);
-Time getFileWriteTime(const wchar_t *fn);
-void setFileTimeFromLocal(const wchar_t *fn, Time t);
-void setFileTimeFromUtc(const wchar_t *fn, Time t);
-void setCrtModFileTimeFromLocal(const wchar_t *fn, Time t);
-void setCrtModFileTimeFromUtc(const wchar_t *fn, Time t);;
+void getFileCreationTime(const wchar_t *fn, Time &t);
+void getFileAccessTime(const wchar_t *fn, Time &t);
+void getFileWriteTime(const wchar_t *fn, Time &t);
+void setFileTimeFromLocal(const wchar_t *fn, const Time &loc);
+void setFileTimeFromUtc(const wchar_t *fn, const Time &utc);
+void setCrtModFileTimeFromLocal(const wchar_t *fn, const Time &loc);
+void setCrtModFileTimeFromUtc(const wchar_t *fn, const Time &utc);
 // exec
 bool64 execProc(wchar_t *cmd);
 bool64 execProcBlock(wchar_t *cmd);
+bool64 execProc(wchar_t *cmd, HANDLE &cin, HANDLE &cout);
 // txt + wtxt
 NFND
 TEND
@@ -855,6 +944,9 @@ PADC
 MAX
 MIN
 // types
+NOTHROW
+THREAD
+PARAMNOUSE
 UI16_MAX
 UI32_MAX
 UI64_MAX
